@@ -898,13 +898,33 @@ async function load() {
   try {
     const resp = await fetch(GAS_URL, { cache: 'no-store' });
     const remote = await resp.json();
-    if (remote && remote.rows && (remote.rows.length > rows.length || remote.nextId > nextId)) {
-      rows   = remote.rows;
-      nextId = remote.nextId || nextId;
-      localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
-      render(); updateKPIs();
+
+    if (remote && remote.rows && remote.rows.length > 0) {
+      // Remote has data — use it if it's richer
+      if (remote.rows.length >= rows.length || remote.nextId > nextId) {
+        rows   = remote.rows;
+        nextId = remote.nextId || nextId;
+        localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
+        render(); updateKPIs();
+      }
+      setSyncBadge('ok');
+    } else {
+      // Remote is empty — push our local seed data up so everyone gets it
+      setSyncBadge('saving');
+      const payload = JSON.stringify({ rows, nextId, savedAt: new Date().toISOString() });
+      const pushResp = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: payload
+      });
+      const result = await pushResp.json();
+      if (result.ok) {
+        setSyncBadge('ok');
+        showToast('Data pushed to Google Sheets ✓');
+      } else {
+        setSyncBadge('error', '⚠ ' + (result.error || 'Push failed'));
+      }
     }
-    setSyncBadge('ok');
   } catch(e) { setSyncBadge('error', '⚠ Could not reach Google Sheets'); }
 }
 
