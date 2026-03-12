@@ -998,7 +998,7 @@ function makeDocCell(row) {
 
   if (href) {
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:3px;max-width:110px;overflow:hidden;';
 
     const a = document.createElement('a');
     a.className = 'doc-link';
@@ -1026,13 +1026,13 @@ function makeDocCell(row) {
 function showLinkEditor(row, td) {
   td.innerHTML = '';
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
+  wrap.style.cssText = 'display:flex;flex-direction:column;gap:3px;max-width:110px;overflow:hidden;';
 
   // OneDrive link input
   const inp = document.createElement('input');
   inp.type = 'text';
   inp.placeholder = 'Paste OneDrive link…';
-  inp.style.cssText = 'font-size:11px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;width:100%;max-width:200px;box-sizing:border-box;font-family:Arial,sans-serif;';
+  inp.style.cssText = 'font-size:10px;border:1px solid var(--border);border-radius:4px;padding:3px 5px;width:108px;box-sizing:border-box;font-family:Arial,sans-serif;';
   const saveBtn = document.createElement('button');
   saveBtn.textContent = 'Save';
   saveBtn.style.cssText = 'font-size:10px;padding:3px 8px;background:var(--hra);color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:Arial,sans-serif;align-self:flex-start;';
@@ -1050,21 +1050,6 @@ function showLinkEditor(row, td) {
 
   wrap.appendChild(inp);
   wrap.appendChild(saveBtn);
-
-  // Also keep a small file upload option below
-  const orDiv = document.createElement('div');
-  orDiv.style.cssText = 'font-size:10px;color:var(--text3);margin-top:2px;';
-  orDiv.textContent = 'or upload a PDF:';
-  const fileInp = document.createElement('input');
-  fileInp.type = 'file';
-  fileInp.accept = '.pdf';
-  fileInp.style.cssText = 'font-size:10px;width:100%;margin-top:2px;';
-  fileInp.onchange = () => {
-    if (fileInp.files[0]) handleFileDrop(fileInp.files[0], row, td);
-  };
-
-  wrap.appendChild(orDiv);
-  wrap.appendChild(fileInp);
   td.appendChild(wrap);
 }
 
