@@ -132,21 +132,23 @@ tbody tr:nth-child(even) { background:#fafbfc; }
 tbody tr:hover { background:#edf2f7 !important; }
 
 /* Subtle delete — only shows on row hover */
-.td-del { width:28px; padding:0 4px !important; }
-.del-btn {
+.td-del { width:52px; padding:0 4px !important; white-space:nowrap; }
+.del-btn, .edit-btn {
   display: none;
   background: none;
   border: 1px solid #cbd5e0;
   border-radius: 4px;
   color: #a0aec0;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1;
   padding: 3px 5px;
   cursor: pointer;
   transition: all .15s;
 }
-.del-btn:hover { border-color:#fc8181; color:#e53e3e; background:#fff5f5; }
-tbody tr:hover .del-btn { display: inline-block; }
+.del-btn:hover  { border-color:#fc8181; color:#e53e3e; background:#fff5f5; }
+.edit-btn:hover { border-color:var(--hra-bd); color:var(--hra); background:var(--hra-lt); }
+tbody tr:hover .del-btn,
+tbody tr:hover .edit-btn { display: inline-block; }
 
 td { padding:10px 12px; vertical-align:middle; }
 
@@ -175,7 +177,7 @@ td { padding:10px 12px; vertical-align:middle; }
 }
 .td-duedate input[type=date]::-webkit-calendar-picker-indicator,
 .td-completed input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; }
-.td-doc   { width:110px; }
+.td-doc   { width:120px; max-width:120px; overflow:hidden; }
 
 /* dropdowns */
 select.dd {
@@ -205,8 +207,10 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
   display:inline-flex; align-items:center; gap:4px;
   font-size:11px; font-weight:700; color:var(--hra);
   text-decoration:none; padding:4px 9px; border:1px solid var(--hra-bd);
-  border-radius:4px; background:var(--hra-lt); white-space:nowrap; transition:all .13s;
+  border-radius:4px; background:var(--hra-lt); white-space:nowrap;
+  transition:all .13s; max-width:100%; box-sizing:border-box;
 }
+.doc-link span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70px; display:inline-block; vertical-align:middle; }
 .doc-link:hover { background:var(--hra); color:#fff; border-color:var(--hra); }
 .doc-none { font-size:11px; color:var(--text3); }
 
@@ -335,11 +339,11 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
     <div class="hdr-sub">Sacramento Republic FC Stadium &nbsp;·&nbsp; HRA Project #2340</div>
   </div>
   <div class="hdr-right">Pegasus Development &nbsp;·&nbsp; Machete Group &nbsp;·&nbsp; SRFC<br>Updated March 2026</div>
-  <div style="margin-left:12px;display:flex;align-items:center;gap:8px;flex-shrink:0;">
-    <span id="sync-indicator" style="font-size:11px;color:rgba(255,255,255,0.45);white-space:nowrap;">⟳ Syncing…</span>
-    <button onclick="refreshFromSharePoint()" title="Refresh from SharePoint" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:#fff;padding:5px 8px;cursor:pointer;font-size:13px;line-height:1;">↻</button>
+  <div style="display:flex;align-items:center;gap:8px;margin-left:14px;flex-shrink:0;">
+    <span id="sync-badge" style="font-size:11px;color:#94a3b8;white-space:nowrap;">● Local only</span>
+    <button onclick="manualRefresh()" title="Pull latest from Google Sheets" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:#fff;padding:5px 8px;cursor:pointer;font-size:13px;line-height:1;">↻</button>
   </div>
-  <button id="openSettings" title="SharePoint Settings" style="margin-left:6px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:#fff;padding:6px 9px;cursor:pointer;font-size:15px;line-height:1;flex-shrink:0;">⚙</button>
+  <button id="openSettings" title="Settings" style="margin-left:6px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:#fff;padding:6px 9px;cursor:pointer;font-size:15px;line-height:1;flex-shrink:0;">⚙</button>
 </header>
 
 <!-- ─── PAGE ─────────────────────────────────────── -->
@@ -537,7 +541,80 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
 
 <div class="toast" id="toast"></div>
 
-<!-- ─── SHAREPOINT SETTINGS MODAL ─────────────────── -->
+<!-- ─── EDIT MODAL ──────────────────────────────────── -->
+<div class="overlay" id="edit-overlay">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-hdr">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <span>Edit Direction</span>
+      <button id="closeEdit">✕</button>
+    </div>
+    <div class="modal-body" id="edit-form-body">
+      <div class="form-row">
+        <div class="form-grp">
+          <label>Date of Direction</label>
+          <input type="date" id="e-date">
+        </div>
+        <div class="form-grp">
+          <label>Who Sent Direction</label>
+          <input type="text" id="e-from" placeholder="e.g. Art Zargaryan – Pegasus">
+        </div>
+      </div>
+      <div class="form-grp full">
+        <label>Subject / Topic</label>
+        <input type="text" id="e-topic" placeholder="Brief description of the direction">
+      </div>
+      <div class="form-grp full">
+        <label>Decision Summary</label>
+        <textarea id="e-summary" placeholder="Full text of the owner direction / decision…" style="min-height:100px;"></textarea>
+      </div>
+      <div class="form-grp full">
+        <label>Notes / Action Items</label>
+        <textarea id="e-notes" placeholder="Follow-up actions, caveats, key context…" style="min-height:70px;"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-grp">
+          <label>Status</label>
+          <select id="e-status">
+            <option>Not Started</option><option>In Progress</option>
+            <option>Needs Review</option><option>Completed</option>
+            <option>No Action</option><option>On Going</option>
+          </select>
+        </div>
+        <div class="form-grp">
+          <label>HRA Responsibility</label>
+          <select id="e-hra">
+            <option value="??">?? (Unassigned)</option>
+            <option>Chris</option><option>Lacey</option><option>Phil</option>
+            <option>Brandt</option><option>Nathaniel</option><option>Jared</option>
+            <option>Arkadi</option><option>Alma</option><option>Group</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grp">
+        <label>Company Responsibility</label>
+        <select id="e-company">
+          <option>HRA</option><option>Multiple</option><option>Cini-Little</option>
+          <option>Design Workshop</option><option>Ed Rother</option><option>Elevate</option>
+          <option>HLB</option><option>Howe</option><option>Kimley Horn</option>
+          <option>Levey</option><option>Manica</option><option>MaRS</option>
+          <option>MKA</option><option>Olympique</option><option>Persohn Hahn</option>
+          <option>Ricca</option><option>RWDI</option><option>SSR - Elec</option>
+          <option>SSR - Mech</option><option>SSR - Plumb</option><option>Stantec</option>
+          <option>WJE</option><option>WJHW</option><option>EP Atelier</option>
+        </select>
+      </div>
+      <div class="form-grp full" style="margin-top:4px;">
+        <label>OneDrive PDF Link <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
+        <input type="text" id="e-pdf-link" placeholder="Paste the OneDrive/SharePoint link to the PDF…" style="font-size:12px;">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="cancelEdit">Cancel</button>
+      <button class="btn-save" id="saveEdit">Save Changes</button>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="sp-overlay">
   <div class="modal" style="max-width:520px;">
     <div class="modal-hdr">
@@ -547,8 +624,18 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
     <div class="modal-body">
 
       <p style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:18px;">
-        Configure where your PDF files are stored on SharePoint / OneDrive. Once set, all document links will open directly from SharePoint in your browser — no local <code>pdfs/</code> folder needed.
+        Configure the app's connections. The Google Sheets URL enables live sync across your team — everyone sees the same data in real time.
       </p>
+
+      <div class="form-grp full" style="margin-bottom:14px;">
+        <label>Google Sheets Web App URL</label>
+        <input type="text" id="sp-gas-input" placeholder="https://script.google.com/macros/s/…/exec" style="font-size:12px;">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;line-height:1.6;">
+          Required for team sync. See setup instructions below. Once set, all changes sync instantly for everyone with the app link.
+        </div>
+      </div>
+
+      <div style="height:1px;background:var(--border);margin:4px 0 18px;"></div>
 
       <div class="form-grp full" style="margin-bottom:14px;">
         <label>Anthropic API Key</label>
@@ -584,9 +671,6 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
         3. Copy the <strong>site</strong>, <strong>path</strong>, and <strong>folder</strong> parts into the fields above
       </div>
 
-      <div style="margin-top:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:13px 14px;font-size:12px;line-height:1.7;color:#166534;">
-        <strong>📄 Shared data file:</strong> All tracker changes (status, dates, new rows) are saved to <code>HRA_OD_data.json</code> in your SharePoint folder. Everyone who opens the app reads from the same file — changes sync automatically.
-      </div>
 
       <div style="margin-top:14px;padding:11px 13px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;font-size:12px;color:#166534;" id="sp-test-result" style="display:none;"></div>
     </div>
@@ -760,31 +844,40 @@ const SEED = [
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────
-const STORE_KEY  = 'hra_od_v5';
-const SP_DATA_FILE = 'HRA_OD_data.json'; // saved next to the HTML in SharePoint
+const STORE_KEY = 'hra_od_v5';
 let rows = [];
 let nextId = 100;
 let searchQ = '';
 let filterSt = 'All';
 let sortCol = 'num';
 let sortDir = 1;
-let syncStatus = 'idle'; // 'idle' | 'saving' | 'error'
 
 // Attached files: id → { name, dataURL }
 const attachedFiles = {};
 
-// ── SharePoint data file URL ───────────────────────────────────────────────
-function spDataUrl() {
-  // Store JSON in the same folder as the HTML file (one level above pdfs)
-  const folderSegments = SP_FOLDER.replace(/^\/|\/$/g,'').split('/');
-  const parentFolder   = folderSegments.slice(0, -1).join('/'); // strip 'pdfs'
-  const encodedParent  = parentFolder.split('/').map(s => encodeURIComponent(s)).join('/');
-  return SP_SITE + SP_PATH + '/' + encodedParent + '/' + encodeURIComponent(SP_DATA_FILE);
+// ── Google Sheets sync ────────────────────────────────────────────────────
+let GAS_URL = localStorage.getItem('gas_url') || ''; // set via ⚙ Settings
+let saveTimer = null;
+
+function gasAvailable() { return !!GAS_URL; }
+
+function setSyncBadge(state, msg) {
+  const el = document.getElementById('sync-badge');
+  if (!el) return;
+  const map = {
+    ok:      { text: '✓ Synced',    color: '#22c55e' },
+    saving:  { text: '⟳ Saving…',  color: '#f59e0b' },
+    loading: { text: '⟳ Loading…', color: '#f59e0b' },
+    offline: { text: '● Local only', color: '#94a3b8' },
+    error:   { text: '⚠ Sync error', color: '#ef4444' },
+  };
+  const s = map[state] || map.offline;
+  el.textContent = msg || s.text;
+  el.style.color = s.color;
 }
 
-// ── Load: try SharePoint first, fall back to localStorage ─────────────────
+// Load: localStorage immediately, then Google Sheets in background
 async function load() {
-  // Always paint from localStorage immediately so UI is instant
   try {
     const cached = localStorage.getItem(STORE_KEY);
     if (cached) {
@@ -795,99 +888,62 @@ async function load() {
       rows   = SEED.map(r => ({...r}));
       nextId = 100;
     }
-  } catch(e) {
-    rows = SEED.map(r => ({...r})); nextId = 100;
-  }
-  render();
-  updateKPIs();
+  } catch(e) { rows = SEED.map(r => ({...r})); nextId = 100; }
 
-  // Then fetch from SharePoint in background and merge if newer
+  render(); updateKPIs();
+
+  if (!gasAvailable()) { setSyncBadge('offline'); return; }
+
+  setSyncBadge('loading');
   try {
-    setSyncIndicator('loading');
-    const resp = await fetch(spDataUrl(), { credentials: 'include', cache: 'no-store' });
-    if (resp.ok) {
-      const remote = await resp.json();
-      if (remote && remote.rows && remote.rows.length > 0) {
-        // Use remote if it has more data or a higher nextId
-        if (remote.nextId > nextId || remote.rows.length >= rows.length) {
-          rows   = remote.rows;
-          nextId = remote.nextId || nextId;
-          // Cache locally
-          localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
-          render();
-          updateKPIs();
-        }
-      }
-      setSyncIndicator('ok');
-    } else if (resp.status === 404) {
-      // File doesn't exist yet — will be created on first save
-      setSyncIndicator('ok');
-    } else {
-      setSyncIndicator('warn', 'SharePoint unreachable — using local data');
+    const resp = await fetch(GAS_URL, { cache: 'no-store' });
+    const remote = await resp.json();
+    if (remote && remote.rows && (remote.rows.length > rows.length || remote.nextId > nextId)) {
+      rows   = remote.rows;
+      nextId = remote.nextId || nextId;
+      localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
+      render(); updateKPIs();
     }
-  } catch(e) {
-    setSyncIndicator('warn', 'Offline — changes saved locally');
-  }
+    setSyncBadge('ok');
+  } catch(e) { setSyncBadge('error', '⚠ Could not reach Google Sheets'); }
 }
 
-// ── Save: write to localStorage immediately, then push to SharePoint ───────
-let saveTimer = null;
+// Save: localStorage instantly, debounce push to Google Sheets
 function save() {
-  // Instant local save
   try { localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId })); } catch(e) {}
-  // Debounce cloud push by 800ms to avoid hammering on rapid dropdown changes
+  if (!gasAvailable()) { setSyncBadge('offline'); return; }
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(pushToSharePoint, 800);
+  setSyncBadge('saving');
+  saveTimer = setTimeout(pushToSheets, 900);
 }
 
-async function pushToSharePoint() {
+async function pushToSheets() {
   try {
-    setSyncIndicator('saving');
-    const payload = JSON.stringify({ rows, nextId, savedAt: new Date().toISOString() }, null, 2);
-    const resp = await fetch(spDataUrl(), {
-      method: 'PUT',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+    const payload = JSON.stringify({ rows, nextId, savedAt: new Date().toISOString() });
+    const resp = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
       body: payload
     });
-    if (resp.ok || resp.status === 201) {
-      setSyncIndicator('ok');
-    } else {
-      setSyncIndicator('warn', `Sync failed (${resp.status}) — data saved locally`);
-    }
-  } catch(e) {
-    setSyncIndicator('warn', 'Offline — changes saved locally only');
-  }
+    const result = await resp.json();
+    if (result.ok) { setSyncBadge('ok'); }
+    else { setSyncBadge('error', '⚠ ' + (result.error || 'Sync failed')); }
+  } catch(e) { setSyncBadge('error', '⚠ Sync failed — saved locally'); }
 }
 
-// ── Sync indicator in header ───────────────────────────────────────────────
-function setSyncIndicator(state, msg) {
-  const el = document.getElementById('sync-indicator');
-  if (!el) return;
-  const icons = { loading:'⟳', saving:'⟳', ok:'✓', warn:'⚠' };
-  const colors = { loading:'rgba(255,255,255,0.5)', saving:'rgba(255,255,255,0.7)',
-                   ok:'rgba(255,255,255,0.45)', warn:'#fbbf24' };
-  el.textContent = (icons[state]||'') + ' ' + (msg || { loading:'Syncing…', saving:'Saving…', ok:'Synced', warn:'' }[state] || '');
-  el.style.color = colors[state] || 'rgba(255,255,255,0.45)';
-  syncStatus = state;
-}
-
-// ── Manual refresh button ──────────────────────────────────────────────────
-async function refreshFromSharePoint() {
+async function manualRefresh() {
+  if (!gasAvailable()) { showToast('No Google Sheets URL set — open ⚙ Settings'); return; }
+  setSyncBadge('loading');
   try {
-    setSyncIndicator('loading');
-    const resp = await fetch(spDataUrl(), { credentials: 'include', cache: 'no-store' });
-    if (resp.ok) {
-      const remote = await resp.json();
-      if (remote && remote.rows) {
-        rows = remote.rows; nextId = remote.nextId || nextId;
-        localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
-        render(); updateKPIs();
-        showToast('Data refreshed from SharePoint ✓');
-        setSyncIndicator('ok');
-      }
-    } else { setSyncIndicator('warn', 'Could not reach SharePoint'); }
-  } catch(e) { setSyncIndicator('warn', 'Offline'); }
+    const resp = await fetch(GAS_URL, { cache: 'no-store' });
+    const remote = await resp.json();
+    if (remote && remote.rows) {
+      rows = remote.rows; nextId = remote.nextId || nextId;
+      localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
+      render(); updateKPIs(); showToast('Refreshed from Google Sheets ✓');
+      setSyncBadge('ok');
+    }
+  } catch(e) { setSyncBadge('error', '⚠ Could not reach Google Sheets'); }
 }
 
 // ─── RENDER ───────────────────────────────────────────────────────────────
@@ -926,7 +982,8 @@ function makeDocCell(row) {
     a.href = href;
     a.target = '_blank';
     a.rel = 'noopener';
-    a.innerHTML = pdfIcon() + ' View PDF';
+    a.title = href; // show full URL on hover
+    a.innerHTML = pdfIcon() + ' <span>View PDF</span>';
     wrap.appendChild(a);
 
     // Small "change link" button
@@ -952,7 +1009,7 @@ function showLinkEditor(row, td) {
   const inp = document.createElement('input');
   inp.type = 'text';
   inp.placeholder = 'Paste OneDrive link…';
-  inp.style.cssText = 'font-size:11px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;width:100%;box-sizing:border-box;font-family:Arial,sans-serif;';
+  inp.style.cssText = 'font-size:11px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;width:100%;max-width:200px;box-sizing:border-box;font-family:Arial,sans-serif;';
   const saveBtn = document.createElement('button');
   saveBtn.textContent = 'Save';
   saveBtn.style.cssText = 'font-size:10px;padding:3px 8px;background:var(--hra);color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:Arial,sans-serif;align-self:flex-start;';
@@ -1089,10 +1146,14 @@ function render() {
     inpComp.onchange = e => { e.stopPropagation(); row.dateCompleted = inpComp.value; save(); showToast('Completion date saved'); };
     tdComp.appendChild(inpComp); tr.appendChild(tdComp);
 
-    // Subtle delete — only visible on row hover
+    // Subtle edit + delete — only visible on row hover
     const tdDel = document.createElement('td'); tdDel.className = 'td-del';
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit-btn'; editBtn.title = 'Edit this item'; editBtn.textContent = '✎';
+    editBtn.onclick = e => { e.stopPropagation(); openEditModal(row); };
+    tdDel.appendChild(editBtn);
     const delBtn = document.createElement('button');
-    delBtn.className = 'del-btn'; delBtn.title = 'Remove this item'; delBtn.textContent = '···';
+    delBtn.className = 'del-btn'; delBtn.title = 'Remove this item'; delBtn.textContent = '✕';
     delBtn.onclick = e => {
       e.stopPropagation();
       if (!confirm(`Remove "${row.topic}"? This cannot be undone.`)) return;
@@ -1323,9 +1384,65 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
+// ─── EDIT MODAL ───────────────────────────────────────────────────────────
+let editingRow = null;
+
+function openEditModal(row) {
+  editingRow = row;
+  document.getElementById('e-date').value    = row.date    || '';
+  document.getElementById('e-from').value    = row.from    || '';
+  document.getElementById('e-topic').value   = row.topic   || '';
+  document.getElementById('e-summary').value = row.summary || '';
+  document.getElementById('e-notes').value   = row.notes   || '';
+  document.getElementById('e-status').value  = row.status  || 'Not Started';
+  document.getElementById('e-hra').value     = row.hra     || '??';
+  document.getElementById('e-company').value = row.company || 'HRA';
+  document.getElementById('e-pdf-link').value = row.pdfLink || '';
+  document.getElementById('edit-overlay').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-overlay').classList.remove('open');
+  editingRow = null;
+}
+
+document.getElementById('closeEdit').onclick  = closeEditModal;
+document.getElementById('cancelEdit').onclick = closeEditModal;
+document.getElementById('edit-overlay').onclick = e => {
+  if (e.target === document.getElementById('edit-overlay')) closeEditModal();
+};
+
+document.getElementById('saveEdit').onclick = () => {
+  if (!editingRow) return;
+  const topic = document.getElementById('e-topic').value.trim();
+  if (!topic) { showToast('Subject / Topic is required'); return; }
+
+  editingRow.date    = document.getElementById('e-date').value;
+  editingRow.from    = document.getElementById('e-from').value.trim();
+  editingRow.topic   = topic;
+  editingRow.summary = document.getElementById('e-summary').value.trim();
+  editingRow.notes   = document.getElementById('e-notes').value.trim();
+  editingRow.status  = document.getElementById('e-status').value;
+  editingRow.hra     = document.getElementById('e-hra').value;
+  editingRow.company = document.getElementById('e-company').value;
+
+  const pdfLink = document.getElementById('e-pdf-link').value.trim();
+  if (pdfLink) {
+    editingRow.pdfLink = pdfLink;
+    editingRow.file    = decodeURIComponent(pdfLink.split('/').pop().split('?')[0]);
+  } else {
+    editingRow.pdfLink = null;
+  }
+
+  save(); render(); updateKPIs();
+  closeEditModal();
+  showToast('Direction updated ✓');
+};
+
 // ─── SHAREPOINT SETTINGS MODAL ────────────────────────────────────────────
 function openSettings() {
   document.getElementById('sp-apikey-input').value  = localStorage.getItem('anthropic_api_key') || '';
+  document.getElementById('sp-gas-input').value     = localStorage.getItem('gas_url') || '';
   document.getElementById('sp-site-input').value    = SP_SITE;
   document.getElementById('sp-path-input').value    = SP_PATH;
   document.getElementById('sp-folder-input').value  = SP_FOLDER;
@@ -1346,6 +1463,8 @@ document.getElementById('sp-overlay').onclick = e => {
 document.getElementById('saveSettings').onclick = () => {
   const apiKey = document.getElementById('sp-apikey-input').value.trim();
   if (apiKey) localStorage.setItem('anthropic_api_key', apiKey);
+  const gasUrl = document.getElementById('sp-gas-input').value.trim();
+  if (gasUrl) { GAS_URL = gasUrl; localStorage.setItem('gas_url', gasUrl); }
   SP_SITE   = document.getElementById('sp-site-input').value.trim().replace(/\/$/, '');
   SP_PATH   = document.getElementById('sp-path-input').value.trim().replace(/\/$/, '');
   SP_FOLDER = document.getElementById('sp-folder-input').value.trim().replace(/^\/|\/$/g, '');
@@ -1373,7 +1492,7 @@ document.getElementById('sp-test-btn').onclick = () => {
 };
 
 // ─── INIT ─────────────────────────────────────────────────────────────────
-load(); // async — renders from cache immediately, then syncs from SharePoint
+load(); // async — renders from localStorage instantly, then syncs from Google Sheets
 </script>
 </body>
 </html>
