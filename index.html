@@ -844,7 +844,7 @@ const SEED = [
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────
-const STORE_KEY = 'hra_od_v5';
+const STORE_KEY = 'hra_od_v6'; // bumped to clear stale empty cache
 let rows = [];
 let nextId = 100;
 let searchQ = '';
@@ -878,12 +878,18 @@ function setSyncBadge(state, msg) {
 
 // Load: localStorage immediately, then Google Sheets in background
 async function load() {
+  // Step 1: Load from localStorage (instant) — never trust empty cached rows
   try {
     const cached = localStorage.getItem(STORE_KEY);
     if (cached) {
       const p = JSON.parse(cached);
-      rows   = p.rows   || SEED.map(r => ({...r}));
-      nextId = p.nextId || 100;
+      if (p.rows && p.rows.length > 0) {
+        rows   = p.rows;
+        nextId = p.nextId || 100;
+      } else {
+        rows   = SEED.map(r => ({...r}));
+        nextId = 100;
+      }
     } else {
       rows   = SEED.map(r => ({...r}));
       nextId = 100;
@@ -894,33 +900,30 @@ async function load() {
 
   if (!gasAvailable()) { setSyncBadge('offline'); return; }
 
+  // Step 2: Sync with Google Sheets
   setSyncBadge('loading');
   try {
     const resp = await fetch(GAS_URL, { cache: 'no-store' });
     const remote = await resp.json();
 
     if (remote && remote.rows && remote.rows.length > 0) {
-      // Remote has data — use it if it's richer
-      if (remote.rows.length >= rows.length || remote.nextId > nextId) {
-        rows   = remote.rows;
-        nextId = remote.nextId || nextId;
-        localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
-        render(); updateKPIs();
-      }
+      // Remote has real data — use it
+      rows   = remote.rows;
+      nextId = remote.nextId || nextId;
+      localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
+      render(); updateKPIs();
       setSyncBadge('ok');
     } else {
-      // Remote is empty — push our local seed data up so everyone gets it
+      // Remote is empty — push seed data up so everyone gets the 26 decisions
+      if (rows.length === 0) { rows = SEED.map(r => ({...r})); nextId = 100; render(); updateKPIs(); }
       setSyncBadge('saving');
       const payload = JSON.stringify({ rows, nextId, savedAt: new Date().toISOString() });
-      const pushResp = await fetch(GAS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: payload
-      });
+      const pushResp = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: payload });
       const result = await pushResp.json();
       if (result.ok) {
+        localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
         setSyncBadge('ok');
-        showToast('Data pushed to Google Sheets ✓');
+        showToast('26 decisions pushed to Google Sheets ✓');
       } else {
         setSyncBadge('error', '⚠ ' + (result.error || 'Push failed'));
       }
