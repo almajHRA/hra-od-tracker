@@ -6,6 +6,1532 @@
 <title>HRA – Owner Decisions Tracker</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRA – Owner Decisions Tracker</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --hra:       rgb(0,61,94);
+  --hra-dk:    rgb(0,42,65);
+  --hra-lt:    rgba(0,61,94,0.07);
+  --hra-bd:    rgba(0,61,94,0.18);
+  --white:     #ffffff;
+  --bg:        #f2f4f7;
+  --surface:   #ffffff;
+  --border:    #dde1e7;
+  --text:      #12202c;
+  --text2:     #4a5568;
+  --text3:     #8a9ab0;
+
+  /* status colours */
+  --c-ns:   #64748b; --bg-ns:  #f1f5f9;
+  --c-ip:   #b45309; --bg-ip:  #fffbeb;
+  --c-nr:   #7c3aed; --bg-nr:  #f5f3ff;
+  --c-co:   #166534; --bg-co:  #f0fdf4;
+  --c-na:   #b91c1c; --bg-na:  #fff1f2;
+  --c-og:   #0369a1; --bg-og:  #f0f9ff;
+}
+
+body { font-family: Arial, Helvetica, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+
+/* ─── HEADER ─────────────────────────────────── */
+.hdr {
+  background: var(--hra);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  gap: 18px;
+  position: sticky; top: 0; z-index: 300;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+/* SVG logo inline */
+.hdr-logo { display:flex; align-items:center; flex-shrink:0; }
+
+
+.hdr-divider { width:1px; height:28px; background:rgba(255,255,255,0.22); }
+
+.hdr-title { color:#fff; font-size:15px; font-weight:700; letter-spacing:0.3px; }
+.hdr-sub   { color:rgba(255,255,255,0.55); font-size:11px; }
+
+.hdr-right { margin-left:auto; color:rgba(255,255,255,0.5); font-size:11px; text-align:right; line-height:1.7; }
+
+/* ─── PAGE ───────────────────────────────────── */
+.page { max-width:1640px; margin:0 auto; padding:24px 28px 60px; }
+
+/* ─── KPI STRIP ──────────────────────────────── */
+.kpis { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:20px; }
+.kpi  { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px 16px; border-top:3px solid var(--hra); }
+.kpi.k-ip  { border-top-color: var(--c-ip); }
+.kpi.k-nr  { border-top-color: var(--c-nr); }
+.kpi.k-co  { border-top-color: var(--c-co); }
+.kpi.k-na  { border-top-color: var(--c-na); }
+.kpi.k-og  { border-top-color: var(--c-og); }
+.kpi-lbl   { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text3); margin-bottom:5px; }
+.kpi-num   { font-size:32px; font-weight:700; color:var(--hra); line-height:1; }
+.kpi.k-ip .kpi-num { color:var(--c-ip); }
+.kpi.k-nr .kpi-num { color:var(--c-nr); }
+.kpi.k-co .kpi-num { color:var(--c-co); }
+.kpi.k-na .kpi-num { color:var(--c-na); }
+.kpi.k-og .kpi-num { color:var(--c-og); }
+
+/* ─── TOOLBAR ────────────────────────────────── */
+.toolbar { display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+
+.search-wrap { position:relative; min-width:220px; max-width:320px; }
+.search-wrap input {
+  width:100%; border:1px solid var(--border); border-radius:6px;
+  padding:8px 12px 8px 32px; font-family:Arial,Helvetica,sans-serif;
+  font-size:13px; background:var(--surface); color:var(--text); outline:none;
+  transition:border-color .15s;
+}
+.search-wrap input:focus { border-color:var(--hra); }
+.search-wrap input::placeholder { color:var(--text3); }
+.s-ico { position:absolute; left:9px; top:50%; transform:translateY(-50%); color:var(--text3); font-size:13px; pointer-events:none; }
+
+.filter-group { display:flex; gap:6px; flex-wrap:wrap; }
+.pill {
+  padding:5px 12px; border-radius:20px; border:1px solid var(--border);
+  background:var(--surface); color:var(--text2); font-family:Arial,Helvetica,sans-serif;
+  font-size:10px; font-weight:700; cursor:pointer; transition:all .13s;
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+.pill:hover { border-color:var(--hra); color:var(--hra); background:var(--hra-lt); }
+.pill.on { background:var(--hra); border-color:var(--hra); color:#fff; }
+
+.btn-add {
+  margin-left:auto; display:flex; align-items:center; gap:6px;
+  background:var(--hra); color:#fff; border:none; border-radius:6px;
+  padding:8px 16px; font-family:Arial,Helvetica,sans-serif; font-size:12px;
+  font-weight:700; cursor:pointer; transition:background .13s; white-space:nowrap;
+}
+.btn-add:hover { background:var(--hra-dk); }
+
+.row-count { font-size:11px; color:var(--text3); white-space:nowrap; }
+
+/* ─── TABLE ──────────────────────────────────── */
+.tbl-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.tbl-scroll { overflow-x:auto; }
+
+table { width:100%; border-collapse:collapse; min-width:1200px; }
+
+thead th {
+  background:var(--hra); color:rgba(255,255,255,0.8);
+  font-family:Arial,Helvetica,sans-serif; font-size:10px; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.9px; padding:10px 12px;
+  text-align:left; white-space:nowrap; user-select:none;
+  border-right:1px solid rgba(255,255,255,0.07); cursor:pointer;
+}
+thead th:last-child { border-right:none; cursor:default; }
+thead th:hover:not(.no-sort) { background:rgba(0,80,120,1); color:#fff; }
+.sort-ind { opacity:.4; font-size:9px; }
+th.asc  .sort-ind::after { content:' ↑'; opacity:1; }
+th.desc .sort-ind::after { content:' ↓'; opacity:1; }
+
+tbody tr { border-bottom:1px solid var(--border); transition:background .08s; position:relative; }
+tbody tr:last-child { border-bottom:none; }
+tbody tr:nth-child(even) { background:#fafbfc; }
+tbody tr:hover { background:#edf2f7 !important; }
+
+/* Subtle delete — only shows on row hover */
+.td-del { width:28px; padding:0 4px !important; }
+.del-btn {
+  display: none;
+  background: none;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  color: #a0aec0;
+  font-size: 13px;
+  line-height: 1;
+  padding: 3px 5px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.del-btn:hover { border-color:#fc8181; color:#e53e3e; background:#fff5f5; }
+tbody tr:hover .del-btn { display: inline-block; }
+
+td { padding:10px 12px; vertical-align:middle; }
+
+.td-num   { text-align:center; font-weight:700; color:var(--hra); font-size:13px; width:50px; }
+.td-date  { white-space:nowrap; color:var(--text3); font-size:11px; width:96px; }
+.td-topic { font-weight:700; min-width:160px; max-width:220px; line-height:1.4; font-size:13px; }
+.td-from  { font-size:12px; color:var(--text2); min-width:130px; }
+.td-summary { font-size:12px; color:var(--text2); min-width:240px; max-width:340px; line-height:1.55; }
+.td-notes   { font-size:11px; color:var(--text3); min-width:180px; max-width:260px; line-height:1.5; font-style:italic; }
+.td-status, .td-hra, .td-company { width:140px; }
+.td-duedate, .td-completed { width:130px; }
+.td-duedate input[type=date], .td-completed input[type=date] {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 11px;
+  font-family: Arial, sans-serif;
+  color: var(--text);
+  background: #fff;
+  width: 112px;
+  cursor: pointer;
+}
+.td-duedate input[type=date]:focus, .td-completed input[type=date]:focus {
+  outline: none;
+  border-color: var(--hra);
+}
+.td-duedate input[type=date]::-webkit-calendar-picker-indicator,
+.td-completed input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; }
+.td-doc   { width:110px; }
+
+/* dropdowns */
+select.dd {
+  font-family:Arial,Helvetica,sans-serif; font-size:11px; font-weight:700;
+  border-radius:20px; border:1.5px solid; padding:4px 8px;
+  cursor:pointer; outline:none; width:100%; appearance:none;
+  -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 8px center;
+  padding-right:22px;
+}
+select.dd:focus { outline:2px solid var(--hra); outline-offset:1px; }
+
+/* status colour variants */
+.st-Not-Started  { background:var(--bg-ns); color:var(--c-ns); border-color:#cbd5e1; }
+.st-In-Progress  { background:var(--bg-ip); color:var(--c-ip); border-color:#fcd34d; }
+.st-Needs-Review { background:var(--bg-nr); color:var(--c-nr); border-color:#c4b5fd; }
+.st-Completed    { background:var(--bg-co); color:var(--c-co); border-color:#86efac; }
+.st-No-Action    { background:var(--bg-na); color:var(--c-na); border-color:#fca5a5; }
+.st-On-Going     { background:var(--bg-og); color:var(--c-og); border-color:#7dd3fc; }
+
+/* person/company dd */
+select.dd.person-dd { background-color:#f8f9fb; color:var(--text); border-color:var(--border); font-weight:600; }
+select.dd.person-dd:focus { outline-color:var(--hra); }
+
+/* doc link */
+.doc-link {
+  display:inline-flex; align-items:center; gap:4px;
+  font-size:11px; font-weight:700; color:var(--hra);
+  text-decoration:none; padding:4px 9px; border:1px solid var(--hra-bd);
+  border-radius:4px; background:var(--hra-lt); white-space:nowrap; transition:all .13s;
+}
+.doc-link:hover { background:var(--hra); color:#fff; border-color:var(--hra); }
+.doc-none { font-size:11px; color:var(--text3); }
+
+/* drop zone cell */
+.drop-zone {
+  border:1.5px dashed var(--hra-bd); border-radius:6px; padding:5px 8px;
+  font-size:10px; color:var(--text3); text-align:center; cursor:pointer;
+  transition:all .13s; background:var(--hra-lt);
+}
+.drop-zone:hover, .drop-zone.drag-over { border-color:var(--hra); color:var(--hra); background:rgba(0,61,94,0.1); }
+.drop-zone input[type=file] { display:none; }
+
+/* delete btn */
+  background:none; border:none; cursor:pointer; color:#cbd5e1;
+  font-size:14px; line-height:1; padding:2px 4px; border-radius:3px;
+  transition:color .12s;
+}
+
+/* no results */
+.no-results { text-align:center; padding:48px; color:var(--text3); font-size:14px; display:none; }
+
+/* ─── ADD ROW MODAL ──────────────────────────── */
+.overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4);
+  z-index:500; align-items:center; justify-content:center;
+}
+.overlay.open { display:flex; }
+.modal {
+  background:var(--white); border-radius:12px; width:560px; max-width:96vw;
+  box-shadow:0 20px 60px rgba(0,0,0,0.25); overflow:hidden;
+}
+.modal-hdr {
+  background:var(--hra); color:#fff; padding:16px 20px;
+  font-size:14px; font-weight:700; display:flex; align-items:center; gap:10px;
+}
+.modal-hdr button { margin-left:auto; background:none; border:none; color:rgba(255,255,255,0.7); font-size:18px; cursor:pointer; }
+.modal-body { padding:20px; display:grid; gap:14px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-grp { display:flex; flex-direction:column; gap:5px; }
+.form-grp.full { grid-column:1/-1; }
+.form-grp label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text3); }
+.form-grp input, .form-grp select, .form-grp textarea {
+  border:1px solid var(--border); border-radius:6px; padding:8px 10px;
+  font-family:Arial,Helvetica,sans-serif; font-size:13px; color:var(--text);
+  outline:none; transition:border-color .14s;
+}
+.form-grp input:focus, .form-grp select:focus, .form-grp textarea:focus { border-color:var(--hra); }
+.form-grp textarea { resize:vertical; min-height:64px; }
+
+/* modal file drop */
+.modal-drop {
+  border:2px dashed var(--hra-bd); border-radius:8px; padding:18px;
+  text-align:center; cursor:pointer; color:var(--text3); font-size:12px;
+  background:var(--hra-lt); transition:all .13s;
+}
+.modal-drop:hover, .modal-drop.drag-over { border-color:var(--hra); color:var(--hra); background:rgba(0,61,94,0.1); }
+.modal-drop svg { margin-bottom:6px; display:block; margin-left:auto; margin-right:auto; }
+.modal-drop input[type=file] { display:none; }
+.modal-drop .drop-filename { font-weight:700; color:var(--hra); margin-top:4px; font-size:12px; }
+
+.modal-footer { padding:14px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
+.btn-cancel { padding:8px 16px; border:1px solid var(--border); background:var(--surface); color:var(--text2); border-radius:6px; font-family:Arial,Helvetica,sans-serif; font-size:12px; font-weight:700; cursor:pointer; }
+.btn-cancel:hover { background:var(--bg); }
+.btn-secondary { padding:8px 16px; border:1px solid var(--hra-bd); background:var(--surface); color:var(--hra); border-radius:6px; font-family:Arial,Helvetica,sans-serif; font-size:12px; font-weight:700; cursor:pointer; }
+.btn-secondary:hover { background:var(--hra-lt); }
+.btn-save   { padding:8px 18px; background:var(--hra); color:#fff; border:none; border-radius:6px; font-family:Arial,Helvetica,sans-serif; font-size:12px; font-weight:700; cursor:pointer; }
+.btn-save:hover { background:var(--hra-dk); }
+.btn-save:disabled { opacity:0.5; cursor:not-allowed; }
+
+/* Choose cards */
+.choose-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.choose-card {
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 24px 18px;
+  background: var(--surface);
+  cursor: pointer;
+  text-align: center;
+  transition: all .15s;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.choose-card:hover { border-color: var(--hra); background: var(--hra-lt); }
+.choose-icon { margin-bottom: 10px; }
+.choose-label { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.choose-sub { font-size: 11px; color: var(--text2); line-height: 1.5; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.ai-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--hra-bd);
+  border-top-color: var(--hra);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin: 0 auto;
+}
+
+/* ─── TOAST ──────────────────────────────────── */
+.toast {
+  position:fixed; bottom:22px; right:22px; background:var(--hra); color:#fff;
+  padding:10px 18px; border-radius:8px; font-size:12px; font-weight:700;
+  box-shadow:0 4px 20px rgba(0,61,94,0.3); pointer-events:none;
+  opacity:0; transform:translateY(16px); transition:all .25s; z-index:999;
+}
+.toast.show { opacity:1; transform:translateY(0); }
+
+/* ─── SCROLLBAR ──────────────────────────────── */
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--hra-bd); border-radius:3px; }
+
+@media(max-width:800px) {
+  .page { padding:14px; }
+  .kpis { grid-template-columns:repeat(3,1fr); }
+  .hdr-right, .hdr-sub { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ─── HEADER ───────────────────────────────────── -->
+<header class="hdr">
+  <div class="hdr-logo"><img src="data:image/png;base64,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" alt="HRA – House &amp; Robertson Architects" style="height:40px;width:auto;display:block;"></div>
+  <div class="hdr-divider"></div>
+  <div>
+    <div class="hdr-title">Owner Decisions Tracker</div>
+    <div class="hdr-sub">Sacramento Republic FC Stadium &nbsp;·&nbsp; HRA Project #2340</div>
+  </div>
+  <div class="hdr-right">Pegasus Development &nbsp;·&nbsp; Machete Group &nbsp;·&nbsp; SRFC<br>Updated March 2026</div>
+  <div style="margin-left:12px;display:flex;align-items:center;gap:8px;flex-shrink:0;">
+    <span id="sync-indicator" style="font-size:11px;color:rgba(255,255,255,0.45);white-space:nowrap;">⟳ Syncing…</span>
+    <button onclick="refreshFromSharePoint()" title="Refresh from SharePoint" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:#fff;padding:5px 8px;cursor:pointer;font-size:13px;line-height:1;">↻</button>
+  </div>
+  <button id="openSettings" title="SharePoint Settings" style="margin-left:6px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:#fff;padding:6px 9px;cursor:pointer;font-size:15px;line-height:1;flex-shrink:0;">⚙</button>
+</header>
+
+<!-- ─── PAGE ─────────────────────────────────────── -->
+<div class="page">
+
+  <!-- KPI STRIP -->
+  <div class="kpis">
+    <div class="kpi">         <div class="kpi-lbl">Total</div>       <div class="kpi-num" id="k-total">0</div></div>
+    <div class="kpi k-ip">   <div class="kpi-lbl">In Progress</div> <div class="kpi-num" id="k-ip">0</div></div>
+    <div class="kpi k-nr">   <div class="kpi-lbl">Needs Review</div><div class="kpi-num" id="k-nr">0</div></div>
+    <div class="kpi k-co">   <div class="kpi-lbl">Completed</div>   <div class="kpi-num" id="k-co">0</div></div>
+    <div class="kpi k-na">   <div class="kpi-lbl">No Action</div>   <div class="kpi-num" id="k-na">0</div></div>
+    <div class="kpi k-og">   <div class="kpi-lbl">On Going</div>    <div class="kpi-num" id="k-og">0</div></div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="s-ico">🔍</span>
+      <input id="search" type="text" placeholder="Search topic, sender, date…">
+    </div>
+    <div class="filter-group" id="pills">
+      <button class="pill on" data-f="All">All</button>
+      <button class="pill" data-f="Not Started">Not Started</button>
+      <button class="pill" data-f="In Progress">In Progress</button>
+      <button class="pill" data-f="Needs Review">Needs Review</button>
+      <button class="pill" data-f="Completed">Completed</button>
+      <button class="pill" data-f="No Action">No Action</button>
+      <button class="pill" data-f="On Going">On Going</button>
+    </div>
+    <span class="row-count" id="row-count"></span>
+    <button class="btn-add" id="openModal">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Direction
+    </button>
+  </div>
+
+  <!-- TABLE -->
+  <div class="tbl-card">
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th data-col="num">#<span class="sort-ind"></span></th>
+            <th data-col="date">Date<span class="sort-ind"></span></th>
+            <th data-col="topic">Subject / Topic<span class="sort-ind"></span></th>
+            <th class="no-sort">Decision Summary</th>
+            <th class="no-sort">Notes / Action Items</th>
+            <th data-col="from">Who Sent Direction<span class="sort-ind"></span></th>
+            <th class="no-sort">Status</th>
+            <th class="no-sort">HRA Responsibility</th>
+            <th class="no-sort">Company Resp.</th>
+            <th class="no-sort">Document</th>
+            <th class="no-sort">Due By</th>
+            <th class="no-sort">Date Completed</th>
+            <th class="no-sort" style="width:28px;"></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="no-results" id="no-results">No items match your search or filter.</div>
+  </div>
+</div>
+
+<!-- ─── ADD ROW MODAL ─────────────────────────────── -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-hdr">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span id="modal-title">Add New Direction Item</span>
+      <button id="closeModal">✕</button>
+    </div>
+
+    <!-- STEP 1: Choose method -->
+    <div id="step-choose" class="modal-body">
+      <p style="color:var(--text2);font-size:13px;margin-bottom:20px;">How would you like to add this direction?</p>
+      <div class="choose-grid">
+        <button class="choose-card" id="choose-pdf">
+          <div class="choose-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgb(0,61,94)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="choose-label">Upload PDF</div>
+          <div class="choose-sub">AI reads the document and fills in the form automatically</div>
+        </button>
+        <button class="choose-card" id="choose-manual">
+          <div class="choose-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgb(0,61,94)" stroke-width="1.5"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+          </div>
+          <div class="choose-label">Manual Entry</div>
+          <div class="choose-sub">Fill in the details yourself, no PDF required</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2a: PDF Analyze -->
+    <div id="step-pdf" class="modal-body" style="display:none;">
+
+      <!-- Upload drop zone -->
+      <div class="form-grp full">
+        <label>Upload PDF — saves to SharePoint automatically</label>
+        <div class="modal-drop" id="modal-drop">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(0,61,94)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div>Drop PDF here or click to browse</div>
+          <div class="drop-filename" id="drop-filename"></div>
+          <input type="file" id="f-file" accept=".pdf">
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.7;">
+          The file will be uploaded to your SharePoint <code>pdfs</code> folder, then the AI will read it and populate the form automatically.
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 14px;">
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+        <span style="font-size:11px;color:var(--text3);white-space:nowrap;">or, if already in SharePoint</span>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+
+      <!-- Filename shortcut -->
+      <div class="form-grp full">
+        <label>Enter filename (already in the SharePoint pdfs folder)</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="sp-filename-input" placeholder="e.g. 260310_New Direction Email.pdf" style="font-size:12px;flex:1;">
+          <button id="sp-filename-btn" style="padding:0 14px;background:var(--hra);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;white-space:nowrap;flex-shrink:0;">Use This File</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:5px;line-height:1.6;">
+          Just the filename — the app builds the full SharePoint URL automatically.
+        </div>
+      </div>
+
+      <!-- Upload/fetch progress -->
+      <div id="upload-progress" style="display:none;margin-top:14px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px;" id="upload-status">Uploading to SharePoint…</div>
+        <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden;">
+          <div id="upload-bar" style="height:100%;background:var(--hra);width:0%;transition:width .4s;border-radius:4px;"></div>
+        </div>
+      </div>
+
+      <!-- AI analyzing state -->
+      <div id="ai-analyzing" style="display:none;text-align:center;padding:28px 0;">
+        <div class="ai-spinner"></div>
+        <div style="color:var(--text2);font-size:13px;margin-top:14px;" id="ai-analyzing-msg">Reading document and extracting details…</div>
+      </div>
+
+      <!-- Error + paste fallback -->
+      <div id="ai-error" style="display:none;background:#fff5f5;border:1px solid #fc8181;border-radius:6px;padding:14px;font-size:12px;color:#c53030;margin-top:12px;line-height:1.6;">
+        <div id="ai-error-msg"></div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #feb2b2;color:#744210;">
+          <strong>To fix:</strong> Click ⚙ Settings and make sure your Anthropic API key is entered. If the key is set and you're still seeing this, try paste-text below.
+        </div>
+        <button id="try-paste-btn" style="margin-top:10px;padding:6px 12px;background:#fff;border:1px solid #fc8181;border-radius:5px;color:#c53030;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">
+          ✎ Paste email text instead
+        </button>
+      </div>
+
+      <!-- Paste fallback -->
+      <div id="paste-fallback" style="display:none;margin-top:14px;">
+        <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">Paste the email text — AI will extract the details</label>
+        <textarea id="paste-text" placeholder="Copy and paste the full email text here…" style="width:100%;min-height:140px;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:12px;font-family:Arial,sans-serif;resize:vertical;"></textarea>
+        <button id="analyze-paste-btn" style="margin-top:8px;padding:7px 16px;background:var(--hra);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">Analyze Text</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Review / Edit Form (shared by both paths) -->
+    <div id="step-form" class="modal-body" style="display:none;">
+      <div id="ai-badge" style="display:none;background:var(--hra-lt);border:1px solid var(--hra-bd);border-radius:6px;padding:9px 13px;font-size:12px;color:var(--hra);margin-bottom:16px;">
+        ✦ AI draft — review and edit before saving
+      </div>
+      <div class="form-row">
+        <div class="form-grp">
+          <label>Date of Direction</label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="form-grp">
+          <label>Who Sent Direction</label>
+          <input type="text" id="f-from" placeholder="e.g. Art Zargaryan – Pegasus">
+        </div>
+      </div>
+      <div class="form-grp full">
+        <label>Subject / Topic</label>
+        <input type="text" id="f-topic" placeholder="Brief description of the direction">
+      </div>
+      <div class="form-grp full">
+        <label>Decision Summary</label>
+        <textarea id="f-summary" placeholder="Full text of the owner direction / decision…" style="min-height:88px;"></textarea>
+      </div>
+      <div class="form-grp full">
+        <label>Notes / Action Items</label>
+        <textarea id="f-notes" placeholder="Follow-up actions, caveats, key context…" style="min-height:60px;"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-grp">
+          <label>Status</label>
+          <select id="f-status">
+            <option>Not Started</option><option>In Progress</option>
+            <option>Needs Review</option><option>Completed</option>
+            <option>No Action</option><option>On Going</option>
+          </select>
+        </div>
+        <div class="form-grp">
+          <label>HRA Responsibility</label>
+          <select id="f-hra">
+            <option value="??">?? (Unassigned)</option>
+            <option>Chris</option><option>Lacey</option><option>Phil</option>
+            <option>Brandt</option><option>Nathaniel</option><option>Jared</option>
+            <option>Arkadi</option><option>Alma</option><option>Group</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grp">
+        <label>Company Responsibility</label>
+        <select id="f-company">
+          <option>HRA</option><option>Multiple</option><option>Cini-Little</option>
+          <option>Design Workshop</option><option>Ed Rother</option><option>Elevate</option>
+          <option>HLB</option><option>Howe</option><option>Kimley Horn</option>
+          <option>Levey</option><option>Manica</option><option>MaRS</option>
+          <option>MKA</option><option>Olympique</option><option>Persohn Hahn</option>
+          <option>Ricca</option><option>RWDI</option><option>SSR - Elec</option>
+          <option>SSR - Mech</option><option>SSR - Plumb</option><option>Stantec</option>
+          <option>WJE</option><option>WJHW</option><option>EP Atelier</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" id="cancelModal">Cancel</button>
+      <button class="btn-secondary" id="backBtn" style="display:none;">← Back</button>
+      <button class="btn-save" id="analyzeBtn" style="display:none;">Analyze PDF</button>
+      <button class="btn-save" id="saveModal" style="display:none;">Add to Tracker</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ─── SHAREPOINT SETTINGS MODAL ─────────────────── -->
+<div class="overlay" id="sp-overlay">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-hdr">
+      <span>⚙ SharePoint / OneDrive Settings</span>
+      <button id="closeSettings">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <p style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:18px;">
+        Configure where your PDF files are stored on SharePoint / OneDrive. Once set, all document links will open directly from SharePoint in your browser — no local <code>pdfs/</code> folder needed.
+      </p>
+
+      <div class="form-grp full" style="margin-bottom:14px;">
+        <label>Anthropic API Key</label>
+        <input type="password" id="sp-apikey-input" placeholder="sk-ant-…" style="font-size:12px;">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Required for AI PDF analysis. Get yours at <a href="https://console.anthropic.com" target="_blank" style="color:var(--hra);">console.anthropic.com</a>. Stored in your browser only — not shared.</div>
+      </div>
+
+      <div style="height:1px;background:var(--border);margin:4px 0 18px;"></div>
+
+      <div class="form-grp full" style="margin-bottom:14px;">
+        <label>SharePoint Site URL</label>
+        <input type="text" id="sp-site-input" placeholder="https://hrarch2-my.sharepoint.com" style="font-size:12px;">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">The base domain only — no path after .com</div>
+      </div>
+
+      <div class="form-grp full" style="margin-bottom:14px;">
+        <label>OneDrive Path</label>
+        <input type="text" id="sp-path-input" placeholder="/personal/almaj_hrarch_com/Documents" style="font-size:12px;">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">The path to your OneDrive root — found in your SharePoint file URLs</div>
+      </div>
+
+      <div class="form-grp full" style="margin-bottom:18px;">
+        <label>Subfolder (optional)</label>
+        <input type="text" id="sp-folder-input" placeholder="e.g. 2340 SRFC Stadium_OneDrive/3_Code Analysis and Research/Owner Requirements and Program/pdfs" style="font-size:12px;">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Folder inside OneDrive where the PDFs are stored. Leave blank if files are in the root.</div>
+      </div>
+
+      <div style="background:var(--hra-lt);border:1px solid var(--hra-bd);border-radius:7px;padding:13px 14px;font-size:12px;line-height:1.7;">
+        <strong style="color:var(--hra);">How to find your path:</strong><br>
+        1. Open any PDF in SharePoint / OneDrive in your browser<br>
+        2. Look at the URL — it will look like:<br>
+        <code style="font-size:11px;word-break:break-all;color:var(--hra);">https://hrarch2-my.sharepoint.com/personal/almaj_hrarch_com/Documents/<strong>FolderName</strong>/FileName.pdf</code><br>
+        3. Copy the <strong>site</strong>, <strong>path</strong>, and <strong>folder</strong> parts into the fields above
+      </div>
+
+      <div style="margin-top:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:13px 14px;font-size:12px;line-height:1.7;color:#166534;">
+        <strong>📄 Shared data file:</strong> All tracker changes (status, dates, new rows) are saved to <code>HRA_OD_data.json</code> in your SharePoint folder. Everyone who opens the app reads from the same file — changes sync automatically.
+      </div>
+
+      <div style="margin-top:14px;padding:11px 13px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;font-size:12px;color:#166534;" id="sp-test-result" style="display:none;"></div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between;">
+      <button class="btn-secondary" id="sp-test-btn">Test a Link</button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-cancel" id="cancelSettings">Cancel</button>
+        <button class="btn-save" id="saveSettings">Save Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONSTANTS ────────────────────────────────────────────────────────────
+const HRA_STAFF = ['??','Chris','Lacey','Phil','Brandt','Nathaniel','Jared','Arkadi','Alma','Group'];
+const COMPANIES = ['HRA','Multiple','Cini-Little','Design Workshop','Ed Rother','Elevate',
+  'HLB','Howe','Kimley Horn','Levey','Manica','MaRS','MKA','Olympique','Persohn Hahn',
+  'Ricca','RWDI','SSR - Elec','SSR - Mech','SSR - Plumb','Stantec','WJE','WJHW','EP Atelier'];
+const STATUSES  = ['Not Started','In Progress','Needs Review','Completed','No Action','On Going'];
+const STATUS_CLS = {
+  'Not Started':'st-Not-Started','In Progress':'st-In-Progress',
+  'Needs Review':'st-Needs-Review','Completed':'st-Completed',
+  'No Action':'st-No-Action','On Going':'st-On-Going'
+};
+// ─── SHAREPOINT CONFIG ────────────────────────────────────────────────────
+// All values saved in localStorage — edit via the ⚙ Settings button
+let SP_SITE   = localStorage.getItem('sp_site')   || 'https://hrarch2-my.sharepoint.com';
+let SP_PATH   = localStorage.getItem('sp_path')   || '/personal/almaj_hrarch_com/Documents';
+let SP_FOLDER = localStorage.getItem('sp_folder') || '2340 SRFC Stadium_OneDrive/3_Code Analysis and Research/Owner Requirements and Program/pdfs';
+
+function spLink(filename) {
+  if (!filename) return null;
+  const folder = SP_FOLDER
+    ? '/' + SP_FOLDER.replace(/^\/|\/$/g,'').split('/').map(s => encodeURIComponent(s)).join('/')
+    : '';
+  return SP_SITE + SP_PATH + folder + '/' + encodeURIComponent(filename);
+}
+
+// ─── SEED DATA ────────────────────────────────────────────────────────────
+const SEED = [
+  {id:1,  date:'2025-12-01', topic:'Green Rooms',
+   summary:'No dedicated Green Room. The Auxiliary Locker Room will serve as the Green Room for concert events (up to 7 events/year per the Supplemental EIR). Path of travel between talent and fans to be managed operationally on event days.',
+   notes:'Direction from Todd Dunivant. Path of travel concern is not a design issue — handled operationally. Communicated to HRA and Manica.',
+   from:'Todd Dunivant – SRFC',    status:'Completed',   hra:'??',   company:'HRA',      file:'251201_Green Rooms Owner Decision Email.pdf'},
+
+  {id:2,  date:'2025-12-02', topic:'Remove Living Wall',
+   summary:'Remove exterior living walls from project scope. Direction applies to all future design work and renderings.',
+   notes:'Cost savings item. Communicated to HRA and Manica. Art Zargaryan directed removal.',
+   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'251202_Remove Living Wall Owner Decision Email.pdf'},
+
+  {id:3,  date:'2025-12-12', topic:'Canopy Truss – Tricord w/ Constant Top Chord',
+   summary:'Proceed with tricord truss with constant top chord for the SRFC canopy. This was Art\'s preferred option based on his review following the design meeting.',
+   notes:'Email confirmation 12/12/2025. Direction issued to HRA, Manica, and MKA.',
+   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'MKA',      file:'251212_Tricord Truss with Constant Top Chord Canopy Owner Decision Email.pdf'},
+
+  {id:4,  date:'2025-12-12', topic:'X-Ray Room Removal',
+   summary:'Remove the X-Ray Room from the SRFC stadium scope. Bank the cost savings.',
+   notes:'Direction forwarded to HRA and Manica 12/12/2025.',
+   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'251212_X-Ray Room Owner Decision Email.pdf'},
+
+  {id:5,  date:'2025-12-16', topic:'Elevators – Level of Finish',
+   summary:'Owner decision on elevator level of finish to be incorporated into the baseline estimate and forwarded to the full design team.',
+   notes:'Communicated to design team 12/16/2025. Level of finish decision to be reflected in 100% SD estimate.',
+   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'HRA',      file:'251216_Elevators Level of Finish Assumed in Baseline Estimate Owner Decision Email.pdf'},
+
+  {id:6,  date:'2025-12-16', topic:'Program for Corner Terraces at L250',
+   summary:'Program established for Corner Terraces at Level 250 per attached exhibit (007). Cybil to file email thread and attachment as a consolidated single PDF and update the decision log.',
+   notes:'Exhibit 007 attached. Cybil Bryant to file consolidated PDF.',
+   from:'David Carlock – Machete', status:'Completed',   hra:'??',   company:'HRA',      file:'251216_Program for Corner Terraces at Level 250 Owner Decision Email.pdf'},
+
+  {id:7,  date:'2025-12-16', topic:'Restroom Consolidation',
+   summary:'Owner direction on SRFC restroom consolidation issued. NOTE: Impact on underground/foundation was NOT factored into the current 95% SD estimate — to be caught in the next issuance (100% SD).',
+   notes:'G&T (Kris Mitchell) confirmed the restroom consolidation impact is not in the current estimate. Will be reflected in 100% SD issuance.',
+   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'Multiple', file:'251216_Restroom Consolidation Owner Decision Email.pdf'},
+
+  {id:8,  date:'2026-01-20', topic:'Building Exterior Façade – East',
+   summary:'Do NOT pursue glazing or clerestory windows at the East Club façade. Bank the costs. Reasons: (1) Most events are evening — limited benefit from natural light. (2) Views face Sims Metal — not desirable. (3) Not industry standard for premium clubs. (4) Added cost.',
+   notes:'Decision: maintain opaque façade. Cost savings to be banked. Communicated to Manica.',
+   from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'Manica',   file:'260120_Building Exterior Facade Design East Owner Decision Email.pdf'},
+
+  {id:9,  date:'2026-01-20', topic:'Stadium Ops – 3 Decisions',
+   summary:'(1) Offices under South Grandstands: bare bones finish only — no TVs, no wet bars, no special amenities. (2) Reusable Cups: no on-site washing — insufficient space and dishwashing capacity. (3) Box Office: max 4 windows (2 exterior, 2 interior), reduced from 6. Must include media credential pick-up window.',
+   notes:'Three decisions in one thread. Dustin confirmed 1/17/2026. Molly Zinnikas relayed to HRA team 1/20/2026.',
+   from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'HRA',      file:'260120_Owner Program Decisions Email.pdf'},
+
+  {id:10, date:'2026-01-26', topic:'L400 Hospitality Elevator',
+   summary:'Proceed with dedicated elevator to Level 400 Hospitality Space in base scope. Art verbally approved 1/21; written email confirmation received 1/26.',
+   notes:'Art verbal approval 1/21/2026. Written confirmation 1/26/2026. Molly Zinnikas relayed to HRA.',
+   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'L400_Hospitality Elevator Base Scope Owner Decision Email.pdf'},
+
+  {id:11, date:'2026-01-27', topic:'Canopy Coverage / Extent',
+   summary:'Final Owner decision on canopy coverage and extent. Proceed per attached exhibit 082. Additional context included in email correspondence.',
+   notes:'Exhibit 082 attached. Additional email context included in file.',
+   from:'David Carlock – Machete', status:'Completed',   hra:'??',   company:'HRA',      file:'260127_Canopy Cover and Extent Owner Decision Email.pdf'},
+
+  {id:12, date:'2026-01-27', topic:'NW Level 250 Platform Ledge',
+   summary:'Proceed with Baseline Option for NW Level 250 Platform Edge. David Kelman confirmed receipt and direction to proceed.',
+   notes:'Baseline option selected. Kelman confirmed: "We will proceed with the baseline option."',
+   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'Manica',   file:'260127_NW Level 250 Platform Ledge Owners Decision Email.pdf'},
+
+  {id:13, date:'2026-01-28', topic:'East Club',
+   summary:'Include East Club in base program. Identify opportunities in material and finish levels to reduce costs responsibly. East Club is seen as crucial to the overall fan experience and revenue generation.',
+   notes:'Art: "Identify opportunities in material/finish levels to reduce costs." MaRS and Levy to coordinate programming of space.',
+   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'Multiple', file:'260128_East Club Owner Decision Email.pdf'},
+
+  {id:14, date:'2026-01-28', topic:'CMU Storage',
+   summary:'Proceed with CMU (concrete masonry unit) for storage under grandstands. No change from base design. G&T confirmed Kingspan prefab alternate is cost neutral, but CMU is preferred for 1-hour fire rating (required if storing combustibles) and layout flexibility.',
+   notes:'CMU chosen over Kingspan prefab. 1-hr fire rating required if combustibles stored. Cost neutral confirmed by G&T.',
+   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'CMU_Storage Owner Decision Email.pdf'},
+
+  {id:15, date:'2026-01-28', topic:'Club Within a Club (L200 Platinum Club)',
+   summary:'Platinum Club (Club Within a Club) to remain in scope. Proceed with ~8–10 net sf/person (below the optimal 12 sf/person but accepted). Elevated grab-and-go destination with upscale F&B for Platinum customers. VVIP: 558 members × 0.8 = 447 effective; Grand Hall: 1,698 × 0.8 = 1,359 effective. Both MaRS and Levy to be in lockstep on design and F&B programming.',
+   notes:'VVIP: 558×0.8=447 members; Grand Hall: 1698×0.8=1359 members. MaRS & Levy to program space together. Differentiation important to overall sales planning.',
+   from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'Multiple', file:'Club_within a Club Owner Decision Email.pdf'},
+
+  {id:16, date:'2026-01-28', topic:'Islands in Suites',
+   summary:'Include islands within Premium Suites with no associated MEP. Islands encourage fans to spend time at seats rather than dwelling in the suite. Hard costs to be included within G&T\'s approved cost/sf Interiors budget. Sink centered with island. Coordinate revised kitchen equipment layout with Ricca/SSR/MaRS for 50% DD milestone.',
+   notes:'Kitchen layout per MaRS DP4 mark-up transmitted 1/23/2026 (DP4 L000 Suites). Coordinate for 50% DD milestone.',
+   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'Multiple', file:'Islands in Suites Owner Decision Email.pdf'},
+
+  {id:17, date:'2026-01-30', topic:'Staff/Team Parking Lot, Truck Dock, Trash Enclosure',
+   summary:'Proceed with NW Parking Lot reconfiguration per attached exhibit. New layout provides greater circulation and additional parking stalls. Trash compactor relocated to accommodate 3 compactors + organics bins with more direct waste truck access. Manica to resolve trash room clearance concerns. Coordinate with forthcoming Staff Building revised layout.',
+   notes:'Rob Hedrick initiated. Stantec and civil/landscape to update drawings. Staff Building revised layout forthcoming — include in coordinated NW Parking Lot update along with Bike Valet revisions.',
+   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'Stantec',  file:'Staff and Team Parking Lot Truck Dock Trash Enclosure Owner Decision Email.pdf'},
+
+  {id:18, date:'2026-02-05', topic:'HVAC – Option 1 (Partial VRF Coil AHUs)',
+   summary:'Proceed with HVAC Option 1 (Partial VRF Coil AHUs) instead of basis-of-design (All Packaged Rooftop Heat Pump Units). Option 1 is $31k above base budget — drawing from contingency. Key benefits: (1) Lessens canopy height conflict — more HVAC equipment on mezzanine vs. roof. (2) More energy efficient — current energy model barely meeting code compliance with base design.',
+   notes:'$31k above base budget; drawn from contingency. HRA/SSR still studying if Option 1 fully resolves canopy height issue — not yet confirmed at time of decision.',
+   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'SSR - Mech',file:'SRFC_HVAC Owner Decision Email.pdf'},
+
+  {id:19, date:'2026-02-06', topic:'Canopy Trellis Corners',
+   summary:'Proceed with base design for canopy trellis corners (metal clad louvers/fins). No alternate options to be pursued. Options 1–4 were all incremental costs above base with no compelling design improvement.',
+   notes:'Dustin: "My vote would be to maintain the current aesthetic." Options 1–4 all cost adds vs. base. Art confirmed proceed with base.',
+   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'Canopy Trellis Corners Owner Decision Email.pdf'},
+
+  {id:20, date:'2026-02-06', topic:'Loge Boxes – Telecom / Power Requirements',
+   summary:'Owner decision on Loge Boxes telecom and power requirements. Refer to attached Loge Seating Owner Program Requirements document for full scope of power and data requirements at each loge position.',
+   notes:'Loge Seating Owner Program Requirements document attached to email. Coordinate with SSR for implementation.',
+   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'SSR - Elec',file:'260206_Loge Boxes  Telecom and Power Requirements Owner Decision Email.pdf'},
+
+  {id:21, date:'2026-02-06', topic:'Staff Building Layout & Lockers',
+   summary:'Staff Building to remain within ~5.7ksf footprint. Use smaller orange lockers to maximize quantity within Employee Locker Room. Security Office minimum 250 sf (shift WC if needed). G&T Owner Allowance #4 is voided. Break Room and Changing Room requirements to follow in a separate communication.',
+   notes:'Clarification sent 2/10: all lockers = smaller orange version throughout. Security Office min 250sf. Coordinate arch, civil, and landscape for NW Parking Lot changes.',
+   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'HRA',      file:'260206_Staff Building Layout and Lockers Owner Decision Email.pdf'},
+
+  {id:22, date:'2026-02-10', topic:'West Façade Design Study',
+   summary:'Proceed with base design option for West Façade. Additionally explore: (1) Alternate louver color — black instead of tan per Dustin\'s preference. (2) Eliminate louvers at corner stairwells for cost savings (stairwells would be open per Manica Option 2). Option 1 adds $617k; Option 2 adds $7.6M — both considered cost-prohibitive.',
+   notes:'Dustin prefers exploring different louver color vs. larger material changes. Stairwell louver elimination to be studied for cost savings.',
+   from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'Manica',   file:'West Facade Design Study Owner Decision Email.pdf'},
+
+  {id:23, date:'2026-02-11', topic:"Non-Vehicle Rated Turf / Subgrade at Supporter's Area",
+   summary:"Small golf cart/quad vehicle rated materials required at Supporter's Area for ongoing maintenance. Food trucks are NOT planned for this area. AirDrain + aggregate base sufficient for golf cart/quad; concrete subslab required only for larger vehicles. Geotech recommendations for aggregate base depth still pending from Stantec.",
+   notes:'Stantec: generic detail in current drawings is likely overkill for golf cart use. Collaborate across disciplines (DW, Stantec, HRA) for cost-effective detail solution.',
+   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'Stantec',  file:'NonVehicle Rated Turf and Subgrade at Supporters Area.pdf'},
+
+  {id:24, date:'2026-02-13', topic:'Audio / TVs in Elevators',
+   summary:'Audio and TVs are NOT required in elevators. Rationale: not in base budget, elevator trips are short, and it is not industry standard practice for stadium elevators.',
+   notes:'Confirmed by Dustin Vicari following the 2/13/2026 Owner Program Requirements meeting.',
+   from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'HRA',      file:'260213_AUDIO AND TVSIN ELEVATORS OWNER DECISION EMAIL.pdf'},
+
+  {id:25, date:'2026-02-20', topic:'Quantity & Size of Scoreboards (OD #113)',
+   summary:'Two scoreboards at SW and NE corners, both sized at 20\' × 92\'. Estimated ~$3–4M cost reduction versus prior configuration. Per OD #99 update, scoreboards are to remain curved.',
+   notes:'Per OD #113. Scoreboards to remain curved — confirmed via OD #99 update (see OD #26).',
+   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'113_Quantity of Scoreboards.pdf'},
+
+  {id:26, date:'2026-03-09', topic:'Multi-OD Updates (#99, 125, 126, 135)',
+   summary:'#99: Scoreboards to remain curved (update to prior decision). #125: Grow Light Rooms to expand in size — doors to relocate per new room dimensions. #126: Louvers to be shown as Light Gray in marketing renderings; final color/materials to undergo separate Owner review process. #135: No futureproofing infrastructure for scoreboards or signage at L250 SW & NE corners.',
+   notes:'Multiple OD updates consolidated in single email 3/9/2026. Final louver color/materials still to be determined via separate review.',
+   from:'Roman James – Pegasus',   status:'Completed',   hra:'??',   company:'Multiple', file:'99_125_126_135_Owner Decision Updates.pdf'},
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────
+const STORE_KEY  = 'hra_od_v5';
+const SP_DATA_FILE = 'HRA_OD_data.json'; // saved next to the HTML in SharePoint
+let rows = [];
+let nextId = 100;
+let searchQ = '';
+let filterSt = 'All';
+let sortCol = 'num';
+let sortDir = 1;
+let syncStatus = 'idle'; // 'idle' | 'saving' | 'error'
+
+// Attached files: id → { name, dataURL }
+const attachedFiles = {};
+
+// ── SharePoint data file URL ───────────────────────────────────────────────
+function spDataUrl() {
+  // Store JSON in the same folder as the HTML file (one level above pdfs)
+  const folderSegments = SP_FOLDER.replace(/^\/|\/$/g,'').split('/');
+  const parentFolder   = folderSegments.slice(0, -1).join('/'); // strip 'pdfs'
+  const encodedParent  = parentFolder.split('/').map(s => encodeURIComponent(s)).join('/');
+  return SP_SITE + SP_PATH + '/' + encodedParent + '/' + encodeURIComponent(SP_DATA_FILE);
+}
+
+// ── Load: try SharePoint first, fall back to localStorage ─────────────────
+async function load() {
+  // Always paint from localStorage immediately so UI is instant
+  try {
+    const cached = localStorage.getItem(STORE_KEY);
+    if (cached) {
+      const p = JSON.parse(cached);
+      rows   = p.rows   || SEED.map(r => ({...r}));
+      nextId = p.nextId || 100;
+    } else {
+      rows   = SEED.map(r => ({...r}));
+      nextId = 100;
+    }
+  } catch(e) {
+    rows = SEED.map(r => ({...r})); nextId = 100;
+  }
+  render();
+  updateKPIs();
+
+  // Then fetch from SharePoint in background and merge if newer
+  try {
+    setSyncIndicator('loading');
+    const resp = await fetch(spDataUrl(), { credentials: 'include', cache: 'no-store' });
+    if (resp.ok) {
+      const remote = await resp.json();
+      if (remote && remote.rows && remote.rows.length > 0) {
+        // Use remote if it has more data or a higher nextId
+        if (remote.nextId > nextId || remote.rows.length >= rows.length) {
+          rows   = remote.rows;
+          nextId = remote.nextId || nextId;
+          // Cache locally
+          localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
+          render();
+          updateKPIs();
+        }
+      }
+      setSyncIndicator('ok');
+    } else if (resp.status === 404) {
+      // File doesn't exist yet — will be created on first save
+      setSyncIndicator('ok');
+    } else {
+      setSyncIndicator('warn', 'SharePoint unreachable — using local data');
+    }
+  } catch(e) {
+    setSyncIndicator('warn', 'Offline — changes saved locally');
+  }
+}
+
+// ── Save: write to localStorage immediately, then push to SharePoint ───────
+let saveTimer = null;
+function save() {
+  // Instant local save
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId })); } catch(e) {}
+  // Debounce cloud push by 800ms to avoid hammering on rapid dropdown changes
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(pushToSharePoint, 800);
+}
+
+async function pushToSharePoint() {
+  try {
+    setSyncIndicator('saving');
+    const payload = JSON.stringify({ rows, nextId, savedAt: new Date().toISOString() }, null, 2);
+    const resp = await fetch(spDataUrl(), {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload
+    });
+    if (resp.ok || resp.status === 201) {
+      setSyncIndicator('ok');
+    } else {
+      setSyncIndicator('warn', `Sync failed (${resp.status}) — data saved locally`);
+    }
+  } catch(e) {
+    setSyncIndicator('warn', 'Offline — changes saved locally only');
+  }
+}
+
+// ── Sync indicator in header ───────────────────────────────────────────────
+function setSyncIndicator(state, msg) {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  const icons = { loading:'⟳', saving:'⟳', ok:'✓', warn:'⚠' };
+  const colors = { loading:'rgba(255,255,255,0.5)', saving:'rgba(255,255,255,0.7)',
+                   ok:'rgba(255,255,255,0.45)', warn:'#fbbf24' };
+  el.textContent = (icons[state]||'') + ' ' + (msg || { loading:'Syncing…', saving:'Saving…', ok:'Synced', warn:'' }[state] || '');
+  el.style.color = colors[state] || 'rgba(255,255,255,0.45)';
+  syncStatus = state;
+}
+
+// ── Manual refresh button ──────────────────────────────────────────────────
+async function refreshFromSharePoint() {
+  try {
+    setSyncIndicator('loading');
+    const resp = await fetch(spDataUrl(), { credentials: 'include', cache: 'no-store' });
+    if (resp.ok) {
+      const remote = await resp.json();
+      if (remote && remote.rows) {
+        rows = remote.rows; nextId = remote.nextId || nextId;
+        localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
+        render(); updateKPIs();
+        showToast('Data refreshed from SharePoint ✓');
+        setSyncIndicator('ok');
+      }
+    } else { setSyncIndicator('warn', 'Could not reach SharePoint'); }
+  } catch(e) { setSyncIndicator('warn', 'Offline'); }
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────
+function fmt(dateStr) {
+  if (!dateStr) return '';
+  const [y,m,d] = dateStr.split('-');
+  return `${m}/${d}/${y}`;
+}
+
+function makeDD(opts, val, cls, onChange) {
+  const sel = document.createElement('select');
+  sel.className = 'dd ' + (cls || '');
+  opts.forEach(o => {
+    const op = document.createElement('option');
+    op.value = o; op.textContent = o;
+    if (o === val) op.selected = true;
+    sel.appendChild(op);
+  });
+  sel.onchange = e => { e.stopPropagation(); onChange(sel.value); };
+  return sel;
+}
+
+function makeDocCell(row) {
+  const td = document.createElement('td');
+  td.className = 'td-doc';
+
+  if (attachedFiles[row.id]) {
+    // user-uploaded — open as data URL
+    const a = document.createElement('a');
+    a.className = 'doc-link';
+    a.href = attachedFiles[row.id].dataURL;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.innerHTML = pdfIcon() + ' View PDF';
+    td.appendChild(a);
+  } else if (row.file) {
+    // seed / named file — link to SharePoint
+    const a = document.createElement('a');
+    a.className = 'doc-link';
+    a.href = spLink(row.file);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.innerHTML = pdfIcon() + ' View PDF';
+    td.appendChild(a);
+  } else {
+    // drop zone for new rows without file
+    const dz = document.createElement('div');
+    dz.className = 'drop-zone';
+    dz.innerHTML = `<input type="file" accept=".pdf"> 📎 Attach PDF`;
+    const inp = dz.querySelector('input');
+    dz.onclick = () => inp.click();
+    dz.ondragover = e => { e.preventDefault(); dz.classList.add('drag-over'); };
+    dz.ondragleave = () => dz.classList.remove('drag-over');
+    dz.ondrop = e => { e.preventDefault(); dz.classList.remove('drag-over'); handleFileDrop(e.dataTransfer.files[0], row.id, td); };
+    inp.onchange = () => { if (inp.files[0]) handleFileDrop(inp.files[0], row.id, td); };
+    td.appendChild(dz);
+  }
+  return td;
+}
+
+function handleFileDrop(file, rowId, tdEl) {
+  if (!file || file.type !== 'application/pdf') { showToast('Please attach a PDF file'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    attachedFiles[rowId] = { name: file.name, dataURL: e.target.result };
+    save();
+    // rebuild cell
+    tdEl.innerHTML = '';
+    const a = document.createElement('a');
+    a.className = 'doc-link';
+    a.href = e.target.result;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.innerHTML = pdfIcon() + ' View PDF';
+    tdEl.appendChild(a);
+    showToast('PDF attached: ' + file.name);
+  };
+  reader.readAsDataURL(file);
+}
+
+function pdfIcon() {
+  return `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+}
+
+function render() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+
+  let data = rows.filter(r => {
+    const q = searchQ.toLowerCase();
+    const ms = !q || [r.topic, r.from, r.date, fmt(r.date), r.status, r.hra, r.company, r.summary, r.notes]
+      .some(v => v && v.toLowerCase().includes(q));
+    const mf = filterSt === 'All' || r.status === filterSt;
+    return ms && mf;
+  });
+
+  data.sort((a,b) => {
+    if (sortCol === 'num')  return sortDir * (a.id - b.id);
+    if (sortCol === 'date') return sortDir * (a.date || '').localeCompare(b.date || '');
+    if (sortCol === 'topic') return sortDir * (a.topic || '').localeCompare(b.topic || '');
+    if (sortCol === 'from')  return sortDir * (a.from  || '').localeCompare(b.from  || '');
+    return 0;
+  });
+
+  document.getElementById('no-results').style.display = data.length ? 'none' : 'block';
+  document.getElementById('row-count').textContent = data.length + ' of ' + rows.length + ' items';
+
+  data.forEach((row, idx) => {
+    const tr = document.createElement('tr');
+
+    // # 
+    const tdN = document.createElement('td'); tdN.className='td-num'; tdN.textContent=idx+1; tr.appendChild(tdN);
+
+    // Date
+    const tdD = document.createElement('td'); tdD.className='td-date'; tdD.textContent=fmt(row.date); tr.appendChild(tdD);
+
+    // Topic
+    const tdT = document.createElement('td'); tdT.className='td-topic'; tdT.textContent=row.topic; tr.appendChild(tdT);
+
+    // Decision Summary
+    const tdSm = document.createElement('td'); tdSm.className='td-summary'; tdSm.textContent=row.summary||''; tr.appendChild(tdSm);
+
+    // Notes / Action Items
+    const tdNo = document.createElement('td'); tdNo.className='td-notes'; tdNo.textContent=row.notes||''; tr.appendChild(tdNo);
+
+    // From
+    const tdF = document.createElement('td'); tdF.className='td-from'; tdF.textContent=row.from; tr.appendChild(tdF);
+
+    // Status DD
+    const tdSt = document.createElement('td'); tdSt.className='td-status';
+    const stSel = makeDD(STATUSES, row.status, 'dd ' + STATUS_CLS[row.status], v => {
+      row.status = v;
+      stSel.className = 'dd ' + STATUS_CLS[v];
+      updateKPIs(); save();
+      showToast('Status updated → ' + v);
+    });
+    tdSt.appendChild(stSel); tr.appendChild(tdSt);
+
+    // HRA Responsibility
+    const tdH = document.createElement('td'); tdH.className='td-hra';
+    const hraSel = makeDD(HRA_STAFF, row.hra, 'dd person-dd', v => { row.hra=v; save(); showToast('HRA: '+v); });
+    tdH.appendChild(hraSel); tr.appendChild(tdH);
+
+    // Company Responsibility
+    const tdC = document.createElement('td'); tdC.className='td-company';
+    const coSel = makeDD(COMPANIES, row.company, 'dd person-dd', v => { row.company=v; save(); showToast('Company: '+v); });
+    tdC.appendChild(coSel); tr.appendChild(tdC);
+
+    // Document
+    tr.appendChild(makeDocCell(row));
+
+    // Due By
+    const tdDue = document.createElement('td'); tdDue.className='td-duedate';
+    const inpDue = document.createElement('input'); inpDue.type='date';
+    inpDue.value = row.dueDate || '';
+    inpDue.title = 'Due By';
+    inpDue.onchange = e => { e.stopPropagation(); row.dueDate = inpDue.value; save(); showToast('Due date saved'); };
+    tdDue.appendChild(inpDue); tr.appendChild(tdDue);
+
+    // Date Completed
+    const tdComp = document.createElement('td'); tdComp.className='td-completed';
+    const inpComp = document.createElement('input'); inpComp.type='date';
+    inpComp.value = row.dateCompleted || '';
+    inpComp.title = 'Date Completed';
+    inpComp.onchange = e => { e.stopPropagation(); row.dateCompleted = inpComp.value; save(); showToast('Completion date saved'); };
+    tdComp.appendChild(inpComp); tr.appendChild(tdComp);
+
+    // Subtle delete — only visible on row hover
+    const tdDel = document.createElement('td'); tdDel.className = 'td-del';
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-btn'; delBtn.title = 'Remove this item'; delBtn.textContent = '···';
+    delBtn.onclick = e => {
+      e.stopPropagation();
+      if (!confirm(`Remove "${row.topic}"? This cannot be undone.`)) return;
+      rows = rows.filter(r => r.id !== row.id);
+      delete attachedFiles[row.id];
+      save(); render(); updateKPIs();
+      showToast('Item removed');
+    };
+    tdDel.appendChild(delBtn); tr.appendChild(tdDel);
+
+    tbody.appendChild(tr);
+  });
+
+  updateKPIs();
+}
+
+function updateKPIs() {
+  document.getElementById('k-total').textContent = rows.length;
+  document.getElementById('k-ip').textContent = rows.filter(r=>r.status==='In Progress').length;
+  document.getElementById('k-nr').textContent = rows.filter(r=>r.status==='Needs Review').length;
+  document.getElementById('k-co').textContent = rows.filter(r=>r.status==='Completed').length;
+  document.getElementById('k-na').textContent = rows.filter(r=>r.status==='No Action').length;
+  document.getElementById('k-og').textContent = rows.filter(r=>r.status==='On Going').length;
+}
+
+// ─── SEARCH & FILTER ─────────────────────────────────────────────────────
+document.getElementById('search').addEventListener('input', e => { searchQ=e.target.value; render(); });
+
+document.getElementById('pills').addEventListener('click', e => {
+  const btn = e.target.closest('.pill');
+  if (!btn) return;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  filterSt = btn.dataset.f;
+  render();
+});
+
+// ─── SORTING ─────────────────────────────────────────────────────────────
+document.querySelectorAll('thead th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (sortCol === col) { sortDir *= -1; th.classList.toggle('asc'); th.classList.toggle('desc'); }
+    else {
+      document.querySelectorAll('thead th').forEach(t=>t.classList.remove('asc','desc'));
+      sortCol=col; sortDir=1; th.classList.add('asc');
+    }
+    render();
+  });
+});
+
+// ─── MODAL ───────────────────────────────────────────────────────────────
+let pendingFile     = null;
+let pendingFileB64  = null;
+let modalMode       = 'choose'; // 'choose' | 'pdf' | 'form'
+
+// Step visibility helper
+function showStep(step) {
+  modalMode = step;
+  document.getElementById('step-choose').style.display  = step === 'choose' ? '' : 'none';
+  document.getElementById('step-pdf').style.display     = step === 'pdf'    ? '' : 'none';
+  document.getElementById('step-form').style.display    = step === 'form'   ? '' : 'none';
+  document.getElementById('backBtn').style.display      = step !== 'choose' ? '' : 'none';
+  document.getElementById('analyzeBtn').style.display   = step === 'pdf'    ? '' : 'none';
+  document.getElementById('saveModal').style.display    = step === 'form'   ? '' : 'none';
+  const titles = { choose: 'Add New Direction Item', pdf: 'Upload Owner Decision PDF', form: 'Review & Confirm Details' };
+  document.getElementById('modal-title').textContent = titles[step] || 'Add New Direction Item';
+}
+
+function openModal() {
+  pendingFile    = null;
+  pendingFileB64 = null;
+  document.getElementById('drop-filename').textContent     = '';
+  document.getElementById('ai-analyzing').style.display    = 'none';
+  document.getElementById('ai-error').style.display        = 'none';
+  document.getElementById('ai-badge').style.display        = 'none';
+  document.getElementById('paste-fallback').style.display  = 'none';
+  document.getElementById('upload-progress').style.display = 'none';
+  document.getElementById('paste-text').value              = '';
+  document.getElementById('modal-drop').style.display      = '';
+  document.getElementById('sp-filename-input').value       = '';
+  // Reset form
+  document.getElementById('f-date').value    = new Date().toISOString().slice(0,10);
+  document.getElementById('f-from').value    = '';
+  document.getElementById('f-topic').value   = '';
+  document.getElementById('f-summary').value = '';
+  document.getElementById('f-notes').value   = '';
+  document.getElementById('f-status').value  = 'Not Started';
+  document.getElementById('f-hra').value     = '??';
+  document.getElementById('f-company').value = 'HRA';
+  showStep('choose');
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+}
+
+document.getElementById('openModal').onclick  = openModal;
+document.getElementById('closeModal').onclick  = closeModal;
+document.getElementById('cancelModal').onclick = closeModal;
+document.getElementById('overlay').onclick = e => { if (e.target === document.getElementById('overlay')) closeModal(); };
+
+// Choose path buttons
+document.getElementById('choose-pdf').onclick = () => showStep('pdf');
+document.getElementById('choose-manual').onclick = () => {
+  document.getElementById('ai-badge').style.display = 'none';
+  showStep('form');
+};
+
+// Back button
+document.getElementById('backBtn').onclick = () => {
+  if (modalMode === 'pdf')  showStep('choose');
+  if (modalMode === 'form') showStep(pendingFile ? 'pdf' : 'choose');
+};
+
+// PDF drop zone
+const mDrop = document.getElementById('modal-drop');
+const mFile = document.getElementById('f-file');
+mDrop.onclick     = e => { if (e.target !== mFile) mFile.click(); };
+mDrop.ondragover  = e => { e.preventDefault(); mDrop.classList.add('drag-over'); };
+mDrop.ondragleave = () => mDrop.classList.remove('drag-over');
+mDrop.ondrop      = e => { e.preventDefault(); mDrop.classList.remove('drag-over'); setModalFile(e.dataTransfer.files[0]); };
+mFile.onchange    = () => { if (mFile.files[0]) setModalFile(mFile.files[0]); };
+
+function setModalFile(file) {
+  if (!file || file.type !== 'application/pdf') { showToast('Please select a PDF file'); return; }
+  pendingFile = file;
+  document.getElementById('drop-filename').textContent = '\u{1F4C4} ' + file.name;
+  document.getElementById('ai-error').style.display    = 'none';
+}
+
+// ── Filename shortcut — builds SP URL from just the filename ──────────────
+document.getElementById('sp-filename-btn').onclick = async () => {
+  const fname = document.getElementById('sp-filename-input').value.trim();
+  if (!fname) { showToast('Please enter a filename'); return; }
+  const url = spLink(fname);
+  // Pre-set pendingFile as a named placeholder so the row saves the filename
+  pendingFile    = { name: fname, type: 'application/pdf', spUrl: url };
+  pendingFileB64 = null;
+  await analyzeFromUrl(url);
+};
+
+// ── Analyze button — uploads file to SharePoint then reads it ────────────
+document.getElementById('analyzeBtn').onclick = async () => {
+  if (!pendingFile) { showToast('Please select a PDF or enter a filename'); return; }
+  document.getElementById('ai-error').style.display       = 'none';
+  document.getElementById('paste-fallback').style.display = 'none';
+  document.getElementById('analyzeBtn').disabled          = true;
+
+  try {
+    // Read file as base64
+    const b64 = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload  = () => res(r.result.split(',')[1]);
+      r.onerror = () => rej(new Error('File read failed'));
+      r.readAsDataURL(pendingFile);
+    });
+    pendingFileB64 = b64;
+
+    // ── Upload to SharePoint ────────────────────────────────────────────────
+    setUploadProgress(true, 'Uploading to SharePoint…', 30);
+    const uploadUrl = spLink(pendingFile.name);
+
+    const uploadResp = await fetch(uploadUrl, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/pdf' },
+      body: pendingFile
+    });
+
+    if (!uploadResp.ok && uploadResp.status !== 201) {
+      // Upload failed — still try to analyze using the base64 directly
+      console.warn('SharePoint upload failed:', uploadResp.status, '— proceeding with local read');
+    } else {
+      setUploadProgress(true, 'Upload complete — reading document…', 70);
+    }
+
+    // ── Send to Claude ──────────────────────────────────────────────────────
+    setUploadProgress(false);
+    document.getElementById('ai-analyzing').style.display = '';
+    const content = [
+      { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
+      { type: 'text', text: AI_PROMPT }
+    ];
+    await callClaudeAndPopulate(content);
+
+  } catch (err) {
+    showAIError(err.message);
+  } finally {
+    document.getElementById('analyzeBtn').disabled        = false;
+    document.getElementById('ai-analyzing').style.display = 'none';
+    setUploadProgress(false);
+  }
+};
+
+// ── Fetch an existing SP file by URL and analyze ──────────────────────────
+async function analyzeFromUrl(url) {
+  document.getElementById('ai-error').style.display       = 'none';
+  document.getElementById('paste-fallback').style.display = 'none';
+  document.getElementById('upload-progress').style.display = 'none';
+  document.getElementById('ai-analyzing').style.display   = '';
+  document.getElementById('analyzeBtn').disabled          = true;
+  try {
+    const resp = await fetch(url, { credentials: 'include' });
+    if (!resp.ok) throw new Error(`Could not fetch file (${resp.status}). Make sure you are signed in to SharePoint in this browser and the filename is correct.`);
+    const blob = await resp.blob();
+    const b64  = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload  = () => res(r.result.split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(blob);
+    });
+    pendingFileB64 = b64;
+    const content = [
+      { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
+      { type: 'text', text: AI_PROMPT }
+    ];
+    await callClaudeAndPopulate(content);
+  } catch (err) {
+    showAIError(err.message);
+  } finally {
+    document.getElementById('analyzeBtn').disabled        = false;
+    document.getElementById('ai-analyzing').style.display = 'none';
+  }
+}
+
+function setUploadProgress(show, msg='', pct=0) {
+  const el  = document.getElementById('upload-progress');
+  const bar = document.getElementById('upload-bar');
+  const txt = document.getElementById('upload-status');
+  el.style.display  = show ? '' : 'none';
+  if (show) { txt.textContent = msg; bar.style.width = pct + '%'; }
+}
+
+// ── Paste-text fallback wiring ────────────────────────────────────────────
+document.getElementById('try-paste-btn').onclick = () => {
+  document.getElementById('paste-fallback').style.display = '';
+  document.getElementById('paste-text').focus();
+};
+
+document.getElementById('analyze-paste-btn').onclick = async () => {
+  const txt = document.getElementById('paste-text').value.trim();
+  if (!txt) { showToast('Please paste some text first'); return; }
+
+  document.getElementById('paste-fallback').style.display  = 'none';
+  document.getElementById('ai-analyzing').style.display    = '';
+  document.getElementById('ai-error').style.display        = 'none';
+  document.getElementById('analyze-paste-btn').disabled    = true;
+
+  try {
+    const content = [{ type: 'text', text: 'EMAIL TEXT TO ANALYZE:\n\n' + txt + '\n\n' + AI_PROMPT }];
+    await callClaudeAndPopulate(content);
+  } catch (err) {
+    document.getElementById('paste-fallback').style.display = '';
+    showAIError(err.message);
+  } finally {
+    document.getElementById('analyze-paste-btn').disabled  = false;
+    document.getElementById('ai-analyzing').style.display  = 'none';
+  }
+};
+
+// ── Shared AI helpers ─────────────────────────────────────────────────────
+const AI_PROMPT = `You are analyzing an Owner Decision email for the Sacramento Republic FC stadium project (HRA Project #2340). Extract the following and respond ONLY with a valid JSON object, no markdown, no preamble:
+{
+  "date": "YYYY-MM-DD",
+  "from": "Full Name – Organization",
+  "topic": "Concise subject/topic title (max 8 words)",
+  "summary": "Complete decision summary — what was decided, all key details, numbers, options selected, and reasoning. Write in clear complete sentences.",
+  "notes": "Follow-up action items, caveats, coordination requirements, pending items, or key context for the design team.",
+  "company": "Primary responsible firm — choose the single best match from: HRA, Multiple, Cini-Little, Design Workshop, Ed Rother, Elevate, HLB, Howe, Kimley Horn, Levey, Manica, MaRS, MKA, Olympique, Persohn Hahn, Ricca, RWDI, SSR - Elec, SSR - Mech, SSR - Plumb, Stantec, WJE, WJHW, EP Atelier",
+  "status": "Completed"
+}
+If a field cannot be determined, use an empty string. For date, use today if not found. For from, include both name and organization separated by em dash.`;
+
+async function callClaudeAndPopulate(content) {
+  const apiKey = localStorage.getItem('anthropic_api_key') || '';
+  if (!apiKey) throw new Error('No API key set — click ⚙ Settings and enter your Anthropic API key.');
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content }]
+    })
+  });
+
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => '');
+    throw new Error(`API returned ${resp.status}${body ? ': ' + body.slice(0,120) : ''}`);
+  }
+
+  const data   = await resp.json();
+  const raw    = data.content.map(c => c.text || '').join('');
+  const clean  = raw.replace(/```json|```/g, '').trim();
+  const parsed = JSON.parse(clean);
+
+  if (parsed.date)    document.getElementById('f-date').value    = parsed.date;
+  if (parsed.from)    document.getElementById('f-from').value    = parsed.from;
+  if (parsed.topic)   document.getElementById('f-topic').value   = parsed.topic;
+  if (parsed.summary) document.getElementById('f-summary').value = parsed.summary;
+  if (parsed.notes)   document.getElementById('f-notes').value   = parsed.notes;
+  if (parsed.status)  document.getElementById('f-status').value  = parsed.status;
+  if (parsed.company) {
+    const sel = document.getElementById('f-company');
+    for (let o of sel.options) { if (o.value === parsed.company) { sel.value = parsed.company; break; } }
+  }
+
+  document.getElementById('ai-badge').style.display = '';
+  showStep('form');
+}
+
+function showAIError(msg) {
+  const isCORS = msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('network') || msg.toLowerCase().includes('failed');
+  document.getElementById('ai-error-msg').textContent = isCORS
+    ? '⚠ Could not reach the API — this is usually a CORS/network issue when opening the file locally (not a problem with your PDF).'
+    : '⚠ Could not analyze: ' + msg;
+  document.getElementById('ai-error').style.display = '';
+}
+
+// Save button
+document.getElementById('saveModal').onclick = () => {
+  const topic = document.getElementById('f-topic').value.trim();
+  if (!topic) { showToast('Please enter a subject / topic'); return; }
+
+  const newRow = {
+    id:      nextId++,
+    date:    document.getElementById('f-date').value,
+    topic:   topic,
+    summary: document.getElementById('f-summary').value.trim(),
+    notes:   document.getElementById('f-notes').value.trim(),
+    from:    document.getElementById('f-from').value.trim() || '—',
+    status:  document.getElementById('f-status').value,
+    hra:     document.getElementById('f-hra').value,
+    company: document.getElementById('f-company').value,
+    file:    null,
+  };
+  rows.push(newRow);
+
+  if (pendingFile && pendingFileB64) {
+    attachedFiles[newRow.id] = { name: pendingFile.name, dataURL: 'data:application/pdf;base64,' + pendingFileB64 };
+    save(); render(); updateKPIs();
+  } else if (pendingFile) {
+    const reader = new FileReader();
+    reader.onload = e2 => {
+      attachedFiles[newRow.id] = { name: pendingFile.name, dataURL: e2.target.result };
+      save(); render(); updateKPIs();
+    };
+    reader.readAsDataURL(pendingFile);
+  } else {
+    save(); render(); updateKPIs();
+  }
+
+  closeModal();
+  showToast('New direction item added');
+};
+
+// ─── TOAST ───────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ─── SHAREPOINT SETTINGS MODAL ────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('sp-apikey-input').value  = localStorage.getItem('anthropic_api_key') || '';
+  document.getElementById('sp-site-input').value    = SP_SITE;
+  document.getElementById('sp-path-input').value    = SP_PATH;
+  document.getElementById('sp-folder-input').value  = SP_FOLDER;
+  document.getElementById('sp-test-result').style.display = 'none';
+  document.getElementById('sp-overlay').classList.add('open');
+}
+function closeSettingsModal() {
+  document.getElementById('sp-overlay').classList.remove('open');
+}
+
+document.getElementById('openSettings').onclick    = openSettings;
+document.getElementById('closeSettings').onclick   = closeSettingsModal;
+document.getElementById('cancelSettings').onclick  = closeSettingsModal;
+document.getElementById('sp-overlay').onclick = e => {
+  if (e.target === document.getElementById('sp-overlay')) closeSettingsModal();
+};
+
+document.getElementById('saveSettings').onclick = () => {
+  const apiKey = document.getElementById('sp-apikey-input').value.trim();
+  if (apiKey) localStorage.setItem('anthropic_api_key', apiKey);
+  SP_SITE   = document.getElementById('sp-site-input').value.trim().replace(/\/$/, '');
+  SP_PATH   = document.getElementById('sp-path-input').value.trim().replace(/\/$/, '');
+  SP_FOLDER = document.getElementById('sp-folder-input').value.trim().replace(/^\/|\/$/g, '');
+  localStorage.setItem('sp_site',   SP_SITE);
+  localStorage.setItem('sp_path',   SP_PATH);
+  localStorage.setItem('sp_folder', SP_FOLDER);
+  closeSettingsModal();
+  render(); // refresh all document links
+  showToast('SharePoint settings saved ✓');
+};
+
+document.getElementById('sp-test-btn').onclick = () => {
+  const site   = document.getElementById('sp-site-input').value.trim().replace(/\/$/, '');
+  const path   = document.getElementById('sp-path-input').value.trim().replace(/\/$/, '');
+  const folder = document.getElementById('sp-folder-input').value.trim().replace(/^\/|\/$/g, '');
+  const sub    = folder ? '/' + folder : '';
+  const testFile = '251201_Green Rooms Owner Decision Email.pdf';
+  const url = site + path + sub + '/' + encodeURIComponent(testFile);
+  const el  = document.getElementById('sp-test-result');
+  el.style.display = '';
+  el.style.background = '#f0f9ff';
+  el.style.borderColor = '#bae6fd';
+  el.style.color = '#0369a1';
+  el.innerHTML = '🔗 Test link (click to verify):<br><a href="' + url + '" target="_blank" rel="noopener" style="word-break:break-all;color:var(--hra);">' + url + '</a>';
+};
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+load(); // async — renders from cache immediately, then syncs from SharePoint
+</script>
+</body>
+</html>
 
 :root {
   --hra:       rgb(0,61,94);
