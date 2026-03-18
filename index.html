@@ -127,25 +127,27 @@ tbody tr:nth-child(even) { background:#fafbfc; }
 tbody tr:hover { background:#edf2f7 !important; }
 
 /* ── Action cell — edit + delete buttons ── */
-.td-actions { width:64px; padding:0 6px !important; white-space:nowrap; text-align:center; }
+.td-actions { width:72px; padding:4px 6px !important; white-space:nowrap; text-align:center; vertical-align:middle; }
 
 .del-btn, .edit-btn {
-  display: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: 1px solid #cbd5e0;
   border-radius: 4px;
   color: #a0aec0;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1;
-  padding: 3px 5px;
+  width: 26px;
+  height: 26px;
   cursor: pointer;
   transition: all .15s;
-  margin: 0 1px;
+  margin: 0 2px;
+  flex-shrink: 0;
 }
 .del-btn:hover  { border-color:#fc8181; color:#e53e3e; background:#fff5f5; }
 .edit-btn:hover { border-color:var(--hra-bd); color:var(--hra); background:var(--hra-lt); }
-tbody tr:hover .del-btn,
-tbody tr:hover .edit-btn { display: inline-block; }
 
 td { padding:10px 12px; vertical-align:middle; }
 
@@ -831,7 +833,7 @@ const SEED = [
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────
-const STORE_KEY = 'hra_od_v7'; // bumped — triggers fresh load with odNum fields
+const STORE_KEY = 'hra_od_v8'; // bumped — triggers fresh load with odNum fields
 let rows = [];
 let nextId  = 100;   // internal unique ID counter (never shown)
 let nextOdNum = 27;  // next OD display number
