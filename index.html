@@ -43,15 +43,10 @@ body { font-family: Arial, Helvetica, sans-serif; background: var(--bg); color: 
   box-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
-/* SVG logo inline */
 .hdr-logo { display:flex; align-items:center; flex-shrink:0; }
-
-
 .hdr-divider { width:1px; height:28px; background:rgba(255,255,255,0.22); }
-
 .hdr-title { color:#fff; font-size:15px; font-weight:700; letter-spacing:0.3px; }
 .hdr-sub   { color:rgba(255,255,255,0.55); font-size:11px; }
-
 .hdr-right { margin-left:auto; color:rgba(255,255,255,0.5); font-size:11px; text-align:right; line-height:1.7; }
 
 /* ─── PAGE ───────────────────────────────────── */
@@ -131,8 +126,9 @@ tbody tr:last-child { border-bottom:none; }
 tbody tr:nth-child(even) { background:#fafbfc; }
 tbody tr:hover { background:#edf2f7 !important; }
 
-/* Subtle delete — only shows on row hover */
-.td-del { width:52px; padding:0 4px !important; white-space:nowrap; }
+/* ── Action cell — edit + delete buttons ── */
+.td-actions { width:64px; padding:0 6px !important; white-space:nowrap; text-align:center; }
+
 .del-btn, .edit-btn {
   display: none;
   background: none;
@@ -144,6 +140,7 @@ tbody tr:hover { background:#edf2f7 !important; }
   padding: 3px 5px;
   cursor: pointer;
   transition: all .15s;
+  margin: 0 1px;
 }
 .del-btn:hover  { border-color:#fc8181; color:#e53e3e; background:#fff5f5; }
 .edit-btn:hover { border-color:var(--hra-bd); color:var(--hra); background:var(--hra-lt); }
@@ -152,7 +149,17 @@ tbody tr:hover .edit-btn { display: inline-block; }
 
 td { padding:10px 12px; vertical-align:middle; }
 
-.td-num   { text-align:center; font-weight:700; color:var(--hra); font-size:13px; width:50px; }
+/* ── # column — static OD number ── */
+.td-num {
+  text-align:center;
+  font-weight:700;
+  color:var(--hra);
+  font-size:12px;
+  width:56px;
+  white-space:nowrap;
+  font-family: 'Courier New', monospace;
+}
+
 .td-date  { white-space:nowrap; color:var(--text3); font-size:11px; width:96px; }
 .td-topic { font-weight:700; min-width:160px; max-width:220px; line-height:1.4; font-size:13px; word-break:break-word; overflow-wrap:anywhere; }
 .td-from  { font-size:12px; color:var(--text2); min-width:130px; max-width:180px; word-break:break-word; overflow-wrap:anywhere; }
@@ -222,12 +229,6 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
 }
 .drop-zone:hover, .drop-zone.drag-over { border-color:var(--hra); color:var(--hra); background:rgba(0,61,94,0.1); }
 .drop-zone input[type=file] { display:none; }
-
-/* delete btn */
-  background:none; border:none; cursor:pointer; color:#cbd5e1;
-  font-size:14px; line-height:1; padding:2px 4px; border-radius:3px;
-  transition:color .12s;
-}
 
 /* no results */
 .no-results { text-align:center; padding:48px; color:var(--text3); font-size:14px; display:none; }
@@ -399,7 +400,7 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
             <th class="no-sort">Document</th>
             <th class="no-sort">Due By</th>
             <th class="no-sort">Date Completed</th>
-            <th class="no-sort" style="width:28px;"></th>
+            <th class="no-sort" style="width:72px;"></th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -445,12 +446,10 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
         <label>Paste the full email text below</label>
         <textarea id="paste-text" placeholder="Copy everything from the email — To, From, Subject, body — and paste it all here. The AI will extract the date, decision, action items, and more." style="width:100%;min-height:180px;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:12px;font-family:Arial,sans-serif;resize:vertical;line-height:1.6;box-sizing:border-box;"></textarea>
       </div>
-      <!-- AI analyzing state -->
       <div id="ai-analyzing" style="display:none;text-align:center;padding:24px 0;">
         <div class="ai-spinner"></div>
         <div style="color:var(--text2);font-size:13px;margin-top:14px;">Reading email and extracting details…</div>
       </div>
-      <!-- Error box -->
       <div id="ai-error" style="display:none;background:#fff5f5;border:1px solid #fc8181;border-radius:6px;padding:14px;font-size:12px;color:#c53030;margin-top:12px;line-height:1.6;">
         <strong>⚠ </strong><span id="ai-error-msg"></span>
         <div style="margin-top:8px;padding-top:8px;border-top:1px solid #feb2b2;color:#744210;">
@@ -461,12 +460,9 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
 
     <!-- STEP 3: Review / Edit Form (shared by paste + manual paths) -->
     <div id="step-form" class="modal-body" style="display:none;">
-      <!-- AI badge -->
       <div id="ai-badge" style="display:none;background:var(--hra-lt);border:1px solid var(--hra-bd);border-radius:6px;padding:9px 13px;font-size:12px;color:var(--hra);margin-bottom:14px;">
         ✦ AI extracted — review and edit before saving
       </div>
-
-      <!-- Core fields -->
       <div class="form-row">
         <div class="form-grp">
           <label>Date of Direction</label>
@@ -521,8 +517,6 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
           <option>WJE</option><option>WJHW</option><option>EP Atelier</option>
         </select>
       </div>
-
-      <!-- OneDrive PDF link -->
       <div class="form-grp full" style="margin-top:4px;">
         <label>OneDrive PDF Link <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
         <input type="text" id="f-pdf-link" placeholder="Paste the OneDrive/SharePoint link to the PDF…" style="font-size:12px;">
@@ -615,6 +609,8 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
     </div>
   </div>
 </div>
+
+<!-- ─── SETTINGS MODAL ──────────────────────────────────── -->
 <div class="overlay" id="sp-overlay">
   <div class="modal" style="max-width:520px;">
     <div class="modal-hdr">
@@ -622,11 +618,9 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
       <button id="closeSettings">✕</button>
     </div>
     <div class="modal-body">
-
       <p style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:18px;">
         Configure the app's connections. The Google Sheets URL enables live sync across your team — everyone sees the same data in real time.
       </p>
-
       <div class="form-grp full" style="margin-bottom:14px;">
         <label>Google Sheets Web App URL</label>
         <input type="text" id="sp-gas-input" placeholder="https://script.google.com/macros/s/…/exec" style="font-size:12px;">
@@ -634,35 +628,28 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
           Required for team sync. See setup instructions below. Once set, all changes sync instantly for everyone with the app link.
         </div>
       </div>
-
       <div style="height:1px;background:var(--border);margin:4px 0 18px;"></div>
-
       <div class="form-grp full" style="margin-bottom:14px;">
         <label>Anthropic API Key</label>
         <input type="password" id="sp-apikey-input" placeholder="sk-ant-…" style="font-size:12px;">
         <div style="font-size:11px;color:var(--text3);margin-top:4px;">Required for AI PDF analysis. Get yours at <a href="https://console.anthropic.com" target="_blank" style="color:var(--hra);">console.anthropic.com</a>. Stored in your browser only — not shared.</div>
       </div>
-
       <div style="height:1px;background:var(--border);margin:4px 0 18px;"></div>
-
       <div class="form-grp full" style="margin-bottom:14px;">
         <label>SharePoint Site URL</label>
         <input type="text" id="sp-site-input" placeholder="https://hrarch2-my.sharepoint.com" style="font-size:12px;">
         <div style="font-size:11px;color:var(--text3);margin-top:4px;">The base domain only — no path after .com</div>
       </div>
-
       <div class="form-grp full" style="margin-bottom:14px;">
         <label>OneDrive Path</label>
         <input type="text" id="sp-path-input" placeholder="/personal/almaj_hrarch_com/Documents" style="font-size:12px;">
         <div style="font-size:11px;color:var(--text3);margin-top:4px;">The path to your OneDrive root — found in your SharePoint file URLs</div>
       </div>
-
       <div class="form-grp full" style="margin-bottom:18px;">
         <label>Subfolder (optional)</label>
         <input type="text" id="sp-folder-input" placeholder="e.g. 2340 SRFC Stadium_OneDrive/3_Code Analysis and Research/Owner Requirements and Program/pdfs" style="font-size:12px;">
         <div style="font-size:11px;color:var(--text3);margin-top:4px;">Folder inside OneDrive where the PDFs are stored. Leave blank if files are in the root.</div>
       </div>
-
       <div style="background:var(--hra-lt);border:1px solid var(--hra-bd);border-radius:7px;padding:13px 14px;font-size:12px;line-height:1.7;">
         <strong style="color:var(--hra);">How to find your path:</strong><br>
         1. Open any PDF in SharePoint / OneDrive in your browser<br>
@@ -670,8 +657,6 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
         <code style="font-size:11px;word-break:break-all;color:var(--hra);">https://hrarch2-my.sharepoint.com/personal/almaj_hrarch_com/Documents/<strong>FolderName</strong>/FileName.pdf</code><br>
         3. Copy the <strong>site</strong>, <strong>path</strong>, and <strong>folder</strong> parts into the fields above
       </div>
-
-
       <div style="margin-top:14px;padding:11px 13px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;font-size:12px;color:#166534;" id="sp-test-result" style="display:none;"></div>
     </div>
     <div class="modal-footer" style="justify-content:space-between;">
@@ -696,8 +681,8 @@ const STATUS_CLS = {
   'Needs Review':'st-Needs-Review','Completed':'st-Completed',
   'No Action':'st-No-Action','On Going':'st-On-Going'
 };
+
 // ─── SHAREPOINT CONFIG ────────────────────────────────────────────────────
-// All values saved in localStorage — edit via the ⚙ Settings button
 let SP_SITE   = localStorage.getItem('sp_site')   || 'https://hrarch2-my.sharepoint.com';
 let SP_PATH   = localStorage.getItem('sp_path')   || '/personal/almaj_hrarch_com/Documents';
 let SP_FOLDER = localStorage.getItem('sp_folder') || '2340 SRFC Stadium_OneDrive/3_Code Analysis and Research/Owner Requirements and Program/pdfs';
@@ -711,152 +696,154 @@ function spLink(filename) {
 }
 
 // ─── SEED DATA ────────────────────────────────────────────────────────────
+// NOTE: Each seed row has a permanent `odNum` (OD-001, OD-002, …) that is
+// stored with the record and NEVER recalculated from row position.
 const SEED = [
-  {id:1,  date:'2025-12-01', topic:'Green Rooms',
+  {id:1,  odNum:'OD-001', date:'2025-12-01', topic:'Green Rooms',
    summary:'No dedicated Green Room. The Auxiliary Locker Room will serve as the Green Room for concert events (up to 7 events/year per the Supplemental EIR). Path of travel between talent and fans to be managed operationally on event days.',
    notes:'Direction from Todd Dunivant. Path of travel concern is not a design issue — handled operationally. Communicated to HRA and Manica.',
    from:'Todd Dunivant – SRFC',    status:'Completed',   hra:'??',   company:'HRA',      file:'251201_Green Rooms Owner Decision Email.pdf'},
 
-  {id:2,  date:'2025-12-02', topic:'Remove Living Wall',
+  {id:2,  odNum:'OD-002', date:'2025-12-02', topic:'Remove Living Wall',
    summary:'Remove exterior living walls from project scope. Direction applies to all future design work and renderings.',
    notes:'Cost savings item. Communicated to HRA and Manica. Art Zargaryan directed removal.',
    from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'251202_Remove Living Wall Owner Decision Email.pdf'},
 
-  {id:3,  date:'2025-12-12', topic:'Canopy Truss – Tricord w/ Constant Top Chord',
+  {id:3,  odNum:'OD-003', date:'2025-12-12', topic:'Canopy Truss – Tricord w/ Constant Top Chord',
    summary:'Proceed with tricord truss with constant top chord for the SRFC canopy. This was Art\'s preferred option based on his review following the design meeting.',
    notes:'Email confirmation 12/12/2025. Direction issued to HRA, Manica, and MKA.',
    from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'MKA',      file:'251212_Tricord Truss with Constant Top Chord Canopy Owner Decision Email.pdf'},
 
-  {id:4,  date:'2025-12-12', topic:'X-Ray Room Removal',
+  {id:4,  odNum:'OD-004', date:'2025-12-12', topic:'X-Ray Room Removal',
    summary:'Remove the X-Ray Room from the SRFC stadium scope. Bank the cost savings.',
    notes:'Direction forwarded to HRA and Manica 12/12/2025.',
    from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'251212_X-Ray Room Owner Decision Email.pdf'},
 
-  {id:5,  date:'2025-12-16', topic:'Elevators – Level of Finish',
+  {id:5,  odNum:'OD-005', date:'2025-12-16', topic:'Elevators – Level of Finish',
    summary:'Owner decision on elevator level of finish to be incorporated into the baseline estimate and forwarded to the full design team.',
    notes:'Communicated to design team 12/16/2025. Level of finish decision to be reflected in 100% SD estimate.',
    from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'HRA',      file:'251216_Elevators Level of Finish Assumed in Baseline Estimate Owner Decision Email.pdf'},
 
-  {id:6,  date:'2025-12-16', topic:'Program for Corner Terraces at L250',
+  {id:6,  odNum:'OD-006', date:'2025-12-16', topic:'Program for Corner Terraces at L250',
    summary:'Program established for Corner Terraces at Level 250 per attached exhibit (007). Cybil to file email thread and attachment as a consolidated single PDF and update the decision log.',
    notes:'Exhibit 007 attached. Cybil Bryant to file consolidated PDF.',
    from:'David Carlock – Machete', status:'Completed',   hra:'??',   company:'HRA',      file:'251216_Program for Corner Terraces at Level 250 Owner Decision Email.pdf'},
 
-  {id:7,  date:'2025-12-16', topic:'Restroom Consolidation',
+  {id:7,  odNum:'OD-007', date:'2025-12-16', topic:'Restroom Consolidation',
    summary:'Owner direction on SRFC restroom consolidation issued. NOTE: Impact on underground/foundation was NOT factored into the current 95% SD estimate — to be caught in the next issuance (100% SD).',
    notes:'G&T (Kris Mitchell) confirmed the restroom consolidation impact is not in the current estimate. Will be reflected in 100% SD issuance.',
    from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'Multiple', file:'251216_Restroom Consolidation Owner Decision Email.pdf'},
 
-  {id:8,  date:'2026-01-20', topic:'Building Exterior Façade – East',
+  {id:8,  odNum:'OD-008', date:'2026-01-20', topic:'Building Exterior Façade – East',
    summary:'Do NOT pursue glazing or clerestory windows at the East Club façade. Bank the costs. Reasons: (1) Most events are evening — limited benefit from natural light. (2) Views face Sims Metal — not desirable. (3) Not industry standard for premium clubs. (4) Added cost.',
    notes:'Decision: maintain opaque façade. Cost savings to be banked. Communicated to Manica.',
    from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'Manica',   file:'260120_Building Exterior Facade Design East Owner Decision Email.pdf'},
 
-  {id:9,  date:'2026-01-20', topic:'Stadium Ops – 3 Decisions',
+  {id:9,  odNum:'OD-009', date:'2026-01-20', topic:'Stadium Ops – 3 Decisions',
    summary:'(1) Offices under South Grandstands: bare bones finish only — no TVs, no wet bars, no special amenities. (2) Reusable Cups: no on-site washing — insufficient space and dishwashing capacity. (3) Box Office: max 4 windows (2 exterior, 2 interior), reduced from 6. Must include media credential pick-up window.',
    notes:'Three decisions in one thread. Dustin confirmed 1/17/2026. Molly Zinnikas relayed to HRA team 1/20/2026.',
    from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'HRA',      file:'260120_Owner Program Decisions Email.pdf'},
 
-  {id:10, date:'2026-01-26', topic:'L400 Hospitality Elevator',
+  {id:10, odNum:'OD-010', date:'2026-01-26', topic:'L400 Hospitality Elevator',
    summary:'Proceed with dedicated elevator to Level 400 Hospitality Space in base scope. Art verbally approved 1/21; written email confirmation received 1/26.',
    notes:'Art verbal approval 1/21/2026. Written confirmation 1/26/2026. Molly Zinnikas relayed to HRA.',
    from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'L400_Hospitality Elevator Base Scope Owner Decision Email.pdf'},
 
-  {id:11, date:'2026-01-27', topic:'Canopy Coverage / Extent',
+  {id:11, odNum:'OD-011', date:'2026-01-27', topic:'Canopy Coverage / Extent',
    summary:'Final Owner decision on canopy coverage and extent. Proceed per attached exhibit 082. Additional context included in email correspondence.',
    notes:'Exhibit 082 attached. Additional email context included in file.',
    from:'David Carlock – Machete', status:'Completed',   hra:'??',   company:'HRA',      file:'260127_Canopy Cover and Extent Owner Decision Email.pdf'},
 
-  {id:12, date:'2026-01-27', topic:'NW Level 250 Platform Ledge',
+  {id:12, odNum:'OD-012', date:'2026-01-27', topic:'NW Level 250 Platform Ledge',
    summary:'Proceed with Baseline Option for NW Level 250 Platform Edge. David Kelman confirmed receipt and direction to proceed.',
    notes:'Baseline option selected. Kelman confirmed: "We will proceed with the baseline option."',
    from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'Manica',   file:'260127_NW Level 250 Platform Ledge Owners Decision Email.pdf'},
 
-  {id:13, date:'2026-01-28', topic:'East Club',
+  {id:13, odNum:'OD-013', date:'2026-01-28', topic:'East Club',
    summary:'Include East Club in base program. Identify opportunities in material and finish levels to reduce costs responsibly. East Club is seen as crucial to the overall fan experience and revenue generation.',
    notes:'Art: "Identify opportunities in material/finish levels to reduce costs." MaRS and Levy to coordinate programming of space.',
    from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'Multiple', file:'260128_East Club Owner Decision Email.pdf'},
 
-  {id:14, date:'2026-01-28', topic:'CMU Storage',
+  {id:14, odNum:'OD-014', date:'2026-01-28', topic:'CMU Storage',
    summary:'Proceed with CMU (concrete masonry unit) for storage under grandstands. No change from base design. G&T confirmed Kingspan prefab alternate is cost neutral, but CMU is preferred for 1-hour fire rating (required if storing combustibles) and layout flexibility.',
    notes:'CMU chosen over Kingspan prefab. 1-hr fire rating required if combustibles stored. Cost neutral confirmed by G&T.',
    from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'CMU_Storage Owner Decision Email.pdf'},
 
-  {id:15, date:'2026-01-28', topic:'Club Within a Club (L200 Platinum Club)',
+  {id:15, odNum:'OD-015', date:'2026-01-28', topic:'Club Within a Club (L200 Platinum Club)',
    summary:'Platinum Club (Club Within a Club) to remain in scope. Proceed with ~8–10 net sf/person (below the optimal 12 sf/person but accepted). Elevated grab-and-go destination with upscale F&B for Platinum customers. VVIP: 558 members × 0.8 = 447 effective; Grand Hall: 1,698 × 0.8 = 1,359 effective. Both MaRS and Levy to be in lockstep on design and F&B programming.',
    notes:'VVIP: 558×0.8=447 members; Grand Hall: 1698×0.8=1359 members. MaRS & Levy to program space together. Differentiation important to overall sales planning.',
    from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'Multiple', file:'Club_within a Club Owner Decision Email.pdf'},
 
-  {id:16, date:'2026-01-28', topic:'Islands in Suites',
+  {id:16, odNum:'OD-016', date:'2026-01-28', topic:'Islands in Suites',
    summary:'Include islands within Premium Suites with no associated MEP. Islands encourage fans to spend time at seats rather than dwelling in the suite. Hard costs to be included within G&T\'s approved cost/sf Interiors budget. Sink centered with island. Coordinate revised kitchen equipment layout with Ricca/SSR/MaRS for 50% DD milestone.',
    notes:'Kitchen layout per MaRS DP4 mark-up transmitted 1/23/2026 (DP4 L000 Suites). Coordinate for 50% DD milestone.',
    from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'Multiple', file:'Islands in Suites Owner Decision Email.pdf'},
 
-  {id:17, date:'2026-01-30', topic:'Staff/Team Parking Lot, Truck Dock, Trash Enclosure',
+  {id:17, odNum:'OD-017', date:'2026-01-30', topic:'Staff/Team Parking Lot, Truck Dock, Trash Enclosure',
    summary:'Proceed with NW Parking Lot reconfiguration per attached exhibit. New layout provides greater circulation and additional parking stalls. Trash compactor relocated to accommodate 3 compactors + organics bins with more direct waste truck access. Manica to resolve trash room clearance concerns. Coordinate with forthcoming Staff Building revised layout.',
    notes:'Rob Hedrick initiated. Stantec and civil/landscape to update drawings. Staff Building revised layout forthcoming — include in coordinated NW Parking Lot update along with Bike Valet revisions.',
    from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'Stantec',  file:'Staff and Team Parking Lot Truck Dock Trash Enclosure Owner Decision Email.pdf'},
 
-  {id:18, date:'2026-02-05', topic:'HVAC – Option 1 (Partial VRF Coil AHUs)',
+  {id:18, odNum:'OD-018', date:'2026-02-05', topic:'HVAC – Option 1 (Partial VRF Coil AHUs)',
    summary:'Proceed with HVAC Option 1 (Partial VRF Coil AHUs) instead of basis-of-design (All Packaged Rooftop Heat Pump Units). Option 1 is $31k above base budget — drawing from contingency. Key benefits: (1) Lessens canopy height conflict — more HVAC equipment on mezzanine vs. roof. (2) More energy efficient — current energy model barely meeting code compliance with base design.',
    notes:'$31k above base budget; drawn from contingency. HRA/SSR still studying if Option 1 fully resolves canopy height issue — not yet confirmed at time of decision.',
    from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'SSR - Mech',file:'SRFC_HVAC Owner Decision Email.pdf'},
 
-  {id:19, date:'2026-02-06', topic:'Canopy Trellis Corners',
+  {id:19, odNum:'OD-019', date:'2026-02-06', topic:'Canopy Trellis Corners',
    summary:'Proceed with base design for canopy trellis corners (metal clad louvers/fins). No alternate options to be pursued. Options 1–4 were all incremental costs above base with no compelling design improvement.',
    notes:'Dustin: "My vote would be to maintain the current aesthetic." Options 1–4 all cost adds vs. base. Art confirmed proceed with base.',
    from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'Canopy Trellis Corners Owner Decision Email.pdf'},
 
-  {id:20, date:'2026-02-06', topic:'Loge Boxes – Telecom / Power Requirements',
+  {id:20, odNum:'OD-020', date:'2026-02-06', topic:'Loge Boxes – Telecom / Power Requirements',
    summary:'Owner decision on Loge Boxes telecom and power requirements. Refer to attached Loge Seating Owner Program Requirements document for full scope of power and data requirements at each loge position.',
    notes:'Loge Seating Owner Program Requirements document attached to email. Coordinate with SSR for implementation.',
    from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'SSR - Elec',file:'260206_Loge Boxes  Telecom and Power Requirements Owner Decision Email.pdf'},
 
-  {id:21, date:'2026-02-06', topic:'Staff Building Layout & Lockers',
+  {id:21, odNum:'OD-021', date:'2026-02-06', topic:'Staff Building Layout & Lockers',
    summary:'Staff Building to remain within ~5.7ksf footprint. Use smaller orange lockers to maximize quantity within Employee Locker Room. Security Office minimum 250 sf (shift WC if needed). G&T Owner Allowance #4 is voided. Break Room and Changing Room requirements to follow in a separate communication.',
    notes:'Clarification sent 2/10: all lockers = smaller orange version throughout. Security Office min 250sf. Coordinate arch, civil, and landscape for NW Parking Lot changes.',
    from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'HRA',      file:'260206_Staff Building Layout and Lockers Owner Decision Email.pdf'},
 
-  {id:22, date:'2026-02-10', topic:'West Façade Design Study',
+  {id:22, odNum:'OD-022', date:'2026-02-10', topic:'West Façade Design Study',
    summary:'Proceed with base design option for West Façade. Additionally explore: (1) Alternate louver color — black instead of tan per Dustin\'s preference. (2) Eliminate louvers at corner stairwells for cost savings (stairwells would be open per Manica Option 2). Option 1 adds $617k; Option 2 adds $7.6M — both considered cost-prohibitive.',
    notes:'Dustin prefers exploring different louver color vs. larger material changes. Stairwell louver elimination to be studied for cost savings.',
    from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'Manica',   file:'West Facade Design Study Owner Decision Email.pdf'},
 
-  {id:23, date:'2026-02-11', topic:"Non-Vehicle Rated Turf / Subgrade at Supporter's Area",
+  {id:23, odNum:'OD-023', date:'2026-02-11', topic:"Non-Vehicle Rated Turf / Subgrade at Supporter's Area",
    summary:"Small golf cart/quad vehicle rated materials required at Supporter's Area for ongoing maintenance. Food trucks are NOT planned for this area. AirDrain + aggregate base sufficient for golf cart/quad; concrete subslab required only for larger vehicles. Geotech recommendations for aggregate base depth still pending from Stantec.",
    notes:'Stantec: generic detail in current drawings is likely overkill for golf cart use. Collaborate across disciplines (DW, Stantec, HRA) for cost-effective detail solution.',
    from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'Stantec',  file:'NonVehicle Rated Turf and Subgrade at Supporters Area.pdf'},
 
-  {id:24, date:'2026-02-13', topic:'Audio / TVs in Elevators',
+  {id:24, odNum:'OD-024', date:'2026-02-13', topic:'Audio / TVs in Elevators',
    summary:'Audio and TVs are NOT required in elevators. Rationale: not in base budget, elevator trips are short, and it is not industry standard practice for stadium elevators.',
    notes:'Confirmed by Dustin Vicari following the 2/13/2026 Owner Program Requirements meeting.',
    from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'HRA',      file:'260213_AUDIO AND TVSIN ELEVATORS OWNER DECISION EMAIL.pdf'},
 
-  {id:25, date:'2026-02-20', topic:'Quantity & Size of Scoreboards (OD #113)',
+  {id:25, odNum:'OD-025', date:'2026-02-20', topic:'Quantity & Size of Scoreboards (OD #113)',
    summary:'Two scoreboards at SW and NE corners, both sized at 20\' × 92\'. Estimated ~$3–4M cost reduction versus prior configuration. Per OD #99 update, scoreboards are to remain curved.',
    notes:'Per OD #113. Scoreboards to remain curved — confirmed via OD #99 update (see OD #26).',
    from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'113_Quantity of Scoreboards.pdf'},
 
-  {id:26, date:'2026-03-09', topic:'Multi-OD Updates (#99, 125, 126, 135)',
+  {id:26, odNum:'OD-026', date:'2026-03-09', topic:'Multi-OD Updates (#99, 125, 126, 135)',
    summary:'#99: Scoreboards to remain curved (update to prior decision). #125: Grow Light Rooms to expand in size — doors to relocate per new room dimensions. #126: Louvers to be shown as Light Gray in marketing renderings; final color/materials to undergo separate Owner review process. #135: No futureproofing infrastructure for scoreboards or signage at L250 SW & NE corners.',
    notes:'Multiple OD updates consolidated in single email 3/9/2026. Final louver color/materials still to be determined via separate review.',
    from:'Roman James – Pegasus',   status:'Completed',   hra:'??',   company:'Multiple', file:'99_125_126_135_Owner Decision Updates.pdf'},
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────
-const STORE_KEY = 'hra_od_v6'; // bumped to clear stale empty cache
+const STORE_KEY = 'hra_od_v7'; // bumped — triggers fresh load with odNum fields
 let rows = [];
-let nextId = 100;
+let nextId  = 100;   // internal unique ID counter (never shown)
+let nextOdNum = 27;  // next OD display number
 let searchQ = '';
 let filterSt = 'All';
 let sortCol = 'num';
 let sortDir = 1;
 
-// Attached files: id → { name, dataURL }
 const attachedFiles = {};
 
 // ── Google Sheets sync ────────────────────────────────────────────────────
-let GAS_URL = localStorage.getItem('gas_url') || ''; // set via ⚙ Settings
+let GAS_URL = localStorage.getItem('gas_url') || '';
 let saveTimer = null;
 
 function gasAvailable() { return !!GAS_URL; }
@@ -876,64 +863,78 @@ function setSyncBadge(state, msg) {
   el.style.color = s.color;
 }
 
-// Load: localStorage immediately, then Google Sheets in background
+// ── Ensure all rows have an odNum (migration for old saved data) ──────────
+function migrateOdNums(rowArr) {
+  let maxOd = 0;
+  rowArr.forEach(r => {
+    if (!r.odNum) {
+      maxOd++;
+      r.odNum = 'OD-' + String(maxOd).padStart(3, '0');
+    } else {
+      const n = parseInt(r.odNum.replace('OD-',''), 10);
+      if (!isNaN(n) && n > maxOd) maxOd = n;
+    }
+  });
+  nextOdNum = maxOd + 1;
+  return rowArr;
+}
+
+function newOdNum() {
+  const n = 'OD-' + String(nextOdNum).padStart(3, '0');
+  nextOdNum++;
+  return n;
+}
+
 async function load() {
-  // Step 1: Load from localStorage (instant) — never trust empty cached rows
   try {
     const cached = localStorage.getItem(STORE_KEY);
     if (cached) {
       const p = JSON.parse(cached);
       if (p.rows && p.rows.length > 0) {
-        rows   = p.rows;
-        nextId = p.nextId || 100;
+        rows      = migrateOdNums(p.rows);
+        nextId    = p.nextId    || 100;
+        nextOdNum = p.nextOdNum || nextOdNum;
       } else {
-        rows   = SEED.map(r => ({...r}));
-        nextId = 100;
+        rows = migrateOdNums(SEED.map(r => ({...r})));
+        nextId = 100; nextOdNum = 27;
       }
     } else {
-      rows   = SEED.map(r => ({...r}));
-      nextId = 100;
+      rows = migrateOdNums(SEED.map(r => ({...r})));
+      nextId = 100; nextOdNum = 27;
     }
-  } catch(e) { rows = SEED.map(r => ({...r})); nextId = 100; }
+  } catch(e) {
+    rows = migrateOdNums(SEED.map(r => ({...r})));
+    nextId = 100; nextOdNum = 27;
+  }
 
   render(); updateKPIs();
 
   if (!gasAvailable()) { setSyncBadge('offline'); return; }
 
-  // Step 2: Sync with Google Sheets
   setSyncBadge('loading');
   try {
-    const resp = await fetch(GAS_URL, { cache: 'no-store' });
+    const resp   = await fetch(GAS_URL, { cache: 'no-store' });
     const remote = await resp.json();
-
     if (remote && remote.rows && remote.rows.length > 0) {
-      // Remote has real data — use it
-      rows   = remote.rows;
-      nextId = remote.nextId || nextId;
-      localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
-      render(); updateKPIs();
-      setSyncBadge('ok');
+      rows      = migrateOdNums(remote.rows);
+      nextId    = remote.nextId    || nextId;
+      nextOdNum = remote.nextOdNum || nextOdNum;
+      localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId, nextOdNum }));
+      render(); updateKPIs(); setSyncBadge('ok');
     } else {
-      // Remote is empty — push seed data up so everyone gets the 26 decisions
-      if (rows.length === 0) { rows = SEED.map(r => ({...r})); nextId = 100; render(); updateKPIs(); }
+      if (rows.length === 0) { rows = migrateOdNums(SEED.map(r=>({...r}))); nextId=100; nextOdNum=27; render(); updateKPIs(); }
       setSyncBadge('saving');
-      const payload = JSON.stringify({ rows, nextId, savedAt: new Date().toISOString() });
-      const pushResp = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: payload });
-      const result = await pushResp.json();
-      if (result.ok) {
-        localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
-        setSyncBadge('ok');
-        showToast('26 decisions pushed to Google Sheets ✓');
-      } else {
-        setSyncBadge('error', '⚠ ' + (result.error || 'Push failed'));
-      }
+      const payload = JSON.stringify({ rows, nextId, nextOdNum, savedAt: new Date().toISOString() });
+      const pushResp = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:payload });
+      const result   = await pushResp.json();
+      if (result.ok) { localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId, nextOdNum })); setSyncBadge('ok'); showToast('26 decisions pushed to Google Sheets ✓'); }
+      else { setSyncBadge('error', '⚠ ' + (result.error||'Push failed')); }
     }
   } catch(e) { setSyncBadge('error', '⚠ Could not reach Google Sheets'); }
 }
 
-// Save: localStorage instantly, debounce push to Google Sheets
 function save() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId })); } catch(e) {}
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId, nextOdNum })); } catch(e) {}
   if (!gasAvailable()) { setSyncBadge('offline'); return; }
   clearTimeout(saveTimer);
   setSyncBadge('saving');
@@ -942,15 +943,11 @@ function save() {
 
 async function pushToSheets() {
   try {
-    const payload = JSON.stringify({ rows, nextId, savedAt: new Date().toISOString() });
-    const resp = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: payload
-    });
-    const result = await resp.json();
+    const payload = JSON.stringify({ rows, nextId, nextOdNum, savedAt: new Date().toISOString() });
+    const resp    = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:payload });
+    const result  = await resp.json();
     if (result.ok) { setSyncBadge('ok'); }
-    else { setSyncBadge('error', '⚠ ' + (result.error || 'Sync failed')); }
+    else { setSyncBadge('error', '⚠ ' + (result.error||'Sync failed')); }
   } catch(e) { setSyncBadge('error', '⚠ Sync failed — saved locally'); }
 }
 
@@ -958,11 +955,13 @@ async function manualRefresh() {
   if (!gasAvailable()) { showToast('No Google Sheets URL set — open ⚙ Settings'); return; }
   setSyncBadge('loading');
   try {
-    const resp = await fetch(GAS_URL, { cache: 'no-store' });
+    const resp   = await fetch(GAS_URL, { cache:'no-store' });
     const remote = await resp.json();
     if (remote && remote.rows) {
-      rows = remote.rows; nextId = remote.nextId || nextId;
-      localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
+      rows      = migrateOdNums(remote.rows);
+      nextId    = remote.nextId    || nextId;
+      nextOdNum = remote.nextOdNum || nextOdNum;
+      localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId, nextOdNum }));
       render(); updateKPIs(); showToast('Refreshed from Google Sheets ✓');
       setSyncBadge('ok');
     }
@@ -992,30 +991,19 @@ function makeDD(opts, val, cls, onChange) {
 function makeDocCell(row) {
   const td = document.createElement('td');
   td.className = 'td-doc';
-
-  // Priority: explicit pdfLink > seed file (spLink) > drop zone
   const href = row.pdfLink || (row.file ? spLink(row.file) : null);
-
   if (href) {
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;flex-direction:column;gap:3px;max-width:110px;overflow:hidden;';
-
     const a = document.createElement('a');
-    a.className = 'doc-link';
-    a.href = href;
-    a.target = '_blank';
-    a.rel = 'noopener';
-    a.title = href; // show full URL on hover
+    a.className = 'doc-link'; a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.title = href;
     a.innerHTML = pdfIcon() + ' <span>View PDF</span>';
     wrap.appendChild(a);
-
-    // Small "change link" button
     const chg = document.createElement('button');
     chg.textContent = '✎ change link';
     chg.style.cssText = 'font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;padding:0;text-align:left;font-family:Arial,sans-serif;';
     chg.onclick = () => showLinkEditor(row, td);
     wrap.appendChild(chg);
-
     td.appendChild(wrap);
   } else {
     showLinkEditor(row, td);
@@ -1027,11 +1015,8 @@ function showLinkEditor(row, td) {
   td.innerHTML = '';
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:flex;flex-direction:column;gap:3px;max-width:110px;overflow:hidden;';
-
-  // OneDrive link input
   const inp = document.createElement('input');
-  inp.type = 'text';
-  inp.placeholder = 'Paste OneDrive link…';
+  inp.type = 'text'; inp.placeholder = 'Paste OneDrive link…';
   inp.style.cssText = 'font-size:10px;border:1px solid var(--border);border-radius:4px;padding:3px 5px;width:108px;box-sizing:border-box;font-family:Arial,sans-serif;';
   const saveBtn = document.createElement('button');
   saveBtn.textContent = 'Save';
@@ -1042,29 +1027,12 @@ function showLinkEditor(row, td) {
     row.pdfLink = url;
     row.file    = decodeURIComponent(url.split('/').pop().split('?')[0]);
     save();
-    // Rebuild cell with link
     td.innerHTML = '';
     td.appendChild(makeDocCell(row).firstChild);
     showToast('PDF link saved ✓');
   };
-
-  wrap.appendChild(inp);
-  wrap.appendChild(saveBtn);
+  wrap.appendChild(inp); wrap.appendChild(saveBtn);
   td.appendChild(wrap);
-}
-
-function handleFileDrop(file, row, tdEl) {
-  if (!file || file.type !== 'application/pdf') { showToast('Please attach a PDF file'); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    attachedFiles[row.id] = { name: file.name, dataURL: e.target.result };
-    row.file = file.name;
-    save();
-    tdEl.innerHTML = '';
-    tdEl.appendChild(makeDocCell(row).firstChild || makeDocCell(row));
-    showToast('PDF attached: ' + file.name);
-  };
-  reader.readAsDataURL(file);
 }
 
 function pdfIcon() {
@@ -1076,29 +1044,37 @@ function render() {
   tbody.innerHTML = '';
 
   let data = rows.filter(r => {
-    const q = searchQ.toLowerCase();
-    const ms = !q || [r.topic, r.from, r.date, fmt(r.date), r.status, r.hra, r.company, r.summary, r.notes]
+    const q  = searchQ.toLowerCase();
+    const ms = !q || [r.topic, r.from, r.date, fmt(r.date), r.status, r.hra, r.company, r.summary, r.notes, r.odNum]
       .some(v => v && v.toLowerCase().includes(q));
     const mf = filterSt === 'All' || r.status === filterSt;
     return ms && mf;
   });
 
   data.sort((a,b) => {
-    if (sortCol === 'num')  return sortDir * (a.id - b.id);
-    if (sortCol === 'date') return sortDir * (a.date || '').localeCompare(b.date || '');
-    if (sortCol === 'topic') return sortDir * (a.topic || '').localeCompare(b.topic || '');
-    if (sortCol === 'from')  return sortDir * (a.from  || '').localeCompare(b.from  || '');
+    if (sortCol === 'num') {
+      // Sort by the numeric part of odNum (e.g. OD-003 → 3)
+      const na = parseInt((a.odNum||'OD-0').replace('OD-',''), 10);
+      const nb = parseInt((b.odNum||'OD-0').replace('OD-',''), 10);
+      return sortDir * (na - nb);
+    }
+    if (sortCol === 'date')  return sortDir * (a.date  ||'').localeCompare(b.date  ||'');
+    if (sortCol === 'topic') return sortDir * (a.topic ||'').localeCompare(b.topic ||'');
+    if (sortCol === 'from')  return sortDir * (a.from  ||'').localeCompare(b.from  ||'');
     return 0;
   });
 
   document.getElementById('no-results').style.display = data.length ? 'none' : 'block';
   document.getElementById('row-count').textContent = data.length + ' of ' + rows.length + ' items';
 
-  data.forEach((row, idx) => {
+  data.forEach(row => {
     const tr = document.createElement('tr');
 
-    // # 
-    const tdN = document.createElement('td'); tdN.className='td-num'; tdN.textContent=idx+1; tr.appendChild(tdN);
+    // # — static OD number tied to this specific direction
+    const tdN = document.createElement('td');
+    tdN.className = 'td-num';
+    tdN.textContent = row.odNum || '—';
+    tr.appendChild(tdN);
 
     // Date
     const tdD = document.createElement('td'); tdD.className='td-date'; tdD.textContent=fmt(row.date); tr.appendChild(tdD);
@@ -1109,7 +1085,7 @@ function render() {
     // Decision Summary
     const tdSm = document.createElement('td'); tdSm.className='td-summary'; tdSm.textContent=row.summary||''; tr.appendChild(tdSm);
 
-    // Notes / Action Items
+    // Notes
     const tdNo = document.createElement('td'); tdNo.className='td-notes'; tdNo.textContent=row.notes||''; tr.appendChild(tdNo);
 
     // From
@@ -1118,10 +1094,7 @@ function render() {
     // Status DD
     const tdSt = document.createElement('td'); tdSt.className='td-status';
     const stSel = makeDD(STATUSES, row.status, 'dd ' + STATUS_CLS[row.status], v => {
-      row.status = v;
-      stSel.className = 'dd ' + STATUS_CLS[v];
-      updateKPIs(); save();
-      showToast('Status updated → ' + v);
+      row.status = v; stSel.className = 'dd ' + STATUS_CLS[v]; updateKPIs(); save(); showToast('Status updated → ' + v);
     });
     tdSt.appendChild(stSel); tr.appendChild(tdSt);
 
@@ -1140,38 +1113,42 @@ function render() {
 
     // Due By
     const tdDue = document.createElement('td'); tdDue.className='td-duedate';
-    const inpDue = document.createElement('input'); inpDue.type='date';
-    inpDue.value = row.dueDate || '';
-    inpDue.title = 'Due By';
-    inpDue.onchange = e => { e.stopPropagation(); row.dueDate = inpDue.value; save(); showToast('Due date saved'); };
+    const inpDue = document.createElement('input'); inpDue.type='date'; inpDue.value=row.dueDate||''; inpDue.title='Due By';
+    inpDue.onchange = e => { e.stopPropagation(); row.dueDate=inpDue.value; save(); showToast('Due date saved'); };
     tdDue.appendChild(inpDue); tr.appendChild(tdDue);
 
     // Date Completed
     const tdComp = document.createElement('td'); tdComp.className='td-completed';
-    const inpComp = document.createElement('input'); inpComp.type='date';
-    inpComp.value = row.dateCompleted || '';
-    inpComp.title = 'Date Completed';
-    inpComp.onchange = e => { e.stopPropagation(); row.dateCompleted = inpComp.value; save(); showToast('Completion date saved'); };
+    const inpComp = document.createElement('input'); inpComp.type='date'; inpComp.value=row.dateCompleted||''; inpComp.title='Date Completed';
+    inpComp.onchange = e => { e.stopPropagation(); row.dateCompleted=inpComp.value; save(); showToast('Completion date saved'); };
     tdComp.appendChild(inpComp); tr.appendChild(tdComp);
 
-    // Subtle edit + delete — only visible on row hover
-    const tdDel = document.createElement('td'); tdDel.className = 'td-del';
+    // ── Actions cell: Edit + Delete ──
+    const tdAct = document.createElement('td');
+    tdAct.className = 'td-actions';
+
     const editBtn = document.createElement('button');
-    editBtn.className = 'edit-btn'; editBtn.title = 'Edit this item'; editBtn.textContent = '✎';
-    editBtn.onclick = e => { e.stopPropagation(); openEditModal(row); };
-    tdDel.appendChild(editBtn);
+    editBtn.className = 'edit-btn';
+    editBtn.title     = 'Edit this item';
+    editBtn.innerHTML = '✎';
+    editBtn.onclick   = e => { e.stopPropagation(); openEditModal(row); };
+    tdAct.appendChild(editBtn);
+
     const delBtn = document.createElement('button');
-    delBtn.className = 'del-btn'; delBtn.title = 'Remove this item'; delBtn.textContent = '✕';
-    delBtn.onclick = e => {
+    delBtn.className = 'del-btn';
+    delBtn.title     = 'Delete this item';
+    delBtn.innerHTML = '🗑';
+    delBtn.onclick   = e => {
       e.stopPropagation();
-      if (!confirm(`Remove "${row.topic}"? This cannot be undone.`)) return;
+      if (!confirm(`Delete "${row.odNum} – ${row.topic}"?\n\nThis cannot be undone.`)) return;
       rows = rows.filter(r => r.id !== row.id);
       delete attachedFiles[row.id];
       save(); render(); updateKPIs();
-      showToast('Item removed');
+      showToast(`${row.odNum} deleted`);
     };
-    tdDel.appendChild(delBtn); tr.appendChild(tdDel);
+    tdAct.appendChild(delBtn);
 
+    tr.appendChild(tdAct);
     tbody.appendChild(tr);
   });
 
@@ -1213,22 +1190,18 @@ document.querySelectorAll('thead th[data-col]').forEach(th => {
 });
 
 // ─── MODAL ───────────────────────────────────────────────────────────────
-let modalMode = 'choose'; // 'choose' | 'paste' | 'form'
+let modalMode = 'choose';
 
 function showStep(step) {
   modalMode = step;
-  document.getElementById('step-choose').style.display = step === 'choose' ? '' : 'none';
-  document.getElementById('step-paste').style.display  = step === 'paste'  ? '' : 'none';
-  document.getElementById('step-form').style.display   = step === 'form'   ? '' : 'none';
-  document.getElementById('backBtn').style.display     = step !== 'choose' ? '' : 'none';
-  document.getElementById('analyzeBtn').style.display  = step === 'paste'  ? '' : 'none';
-  document.getElementById('saveModal').style.display   = step === 'form'   ? '' : 'none';
-  const titles = {
-    choose: 'Add New Direction',
-    paste:  'Paste Email Text',
-    form:   'Review & Edit Details'
-  };
-  document.getElementById('modal-title').textContent = titles[step] || 'Add New Direction';
+  document.getElementById('step-choose').style.display = step==='choose' ? '' : 'none';
+  document.getElementById('step-paste').style.display  = step==='paste'  ? '' : 'none';
+  document.getElementById('step-form').style.display   = step==='form'   ? '' : 'none';
+  document.getElementById('backBtn').style.display     = step!=='choose' ? '' : 'none';
+  document.getElementById('analyzeBtn').style.display  = step==='paste'  ? '' : 'none';
+  document.getElementById('saveModal').style.display   = step==='form'   ? '' : 'none';
+  const titles = { choose:'Add New Direction', paste:'Paste Email Text', form:'Review & Edit Details' };
+  document.getElementById('modal-title').textContent = titles[step]||'Add New Direction';
 }
 
 function openModal() {
@@ -1236,7 +1209,6 @@ function openModal() {
   document.getElementById('ai-analyzing').style.display = 'none';
   document.getElementById('ai-error').style.display     = 'none';
   document.getElementById('ai-badge').style.display     = 'none';
-  // Reset form fields
   document.getElementById('f-date').value    = new Date().toISOString().slice(0,10);
   document.getElementById('f-from').value    = '';
   document.getElementById('f-topic').value   = '';
@@ -1250,31 +1222,17 @@ function openModal() {
   document.getElementById('overlay').classList.add('open');
 }
 
-function closeModal() {
-  document.getElementById('overlay').classList.remove('open');
-}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
 
 document.getElementById('openModal').onclick   = openModal;
 document.getElementById('closeModal').onclick  = closeModal;
 document.getElementById('cancelModal').onclick = closeModal;
-document.getElementById('overlay').onclick = e => {
-  if (e.target === document.getElementById('overlay')) closeModal();
-};
+document.getElementById('overlay').onclick = e => { if (e.target===document.getElementById('overlay')) closeModal(); };
 
-// Choose path buttons
-document.getElementById('choose-paste').onclick = () => showStep('paste');
-document.getElementById('choose-manual').onclick = () => {
-  document.getElementById('ai-badge').style.display = 'none';
-  showStep('form');
-};
+document.getElementById('choose-paste').onclick  = () => showStep('paste');
+document.getElementById('choose-manual').onclick = () => { document.getElementById('ai-badge').style.display='none'; showStep('form'); };
+document.getElementById('backBtn').onclick = () => { if (modalMode==='paste'||modalMode==='form') showStep('choose'); };
 
-// Back button
-document.getElementById('backBtn').onclick = () => {
-  if (modalMode === 'paste') showStep('choose');
-  if (modalMode === 'form')  showStep('choose');
-};
-
-// Analyze button — reads pasted email text
 document.getElementById('analyzeBtn').onclick = async () => {
   const txt = document.getElementById('paste-text').value.trim();
   if (!txt) { showToast('Please paste the email text first'); return; }
@@ -1282,17 +1240,12 @@ document.getElementById('analyzeBtn').onclick = async () => {
   document.getElementById('ai-analyzing').style.display = '';
   document.getElementById('analyzeBtn').disabled        = true;
   try {
-    const content = [{ type: 'text', text: 'EMAIL TEXT TO ANALYZE:\n\n' + txt + '\n\n' + AI_PROMPT }];
+    const content = [{ type:'text', text:'EMAIL TEXT TO ANALYZE:\n\n'+txt+'\n\n'+AI_PROMPT }];
     await callClaudeAndPopulate(content);
-  } catch (err) {
-    showAIError(err.message);
-  } finally {
-    document.getElementById('analyzeBtn').disabled        = false;
-    document.getElementById('ai-analyzing').style.display = 'none';
-  }
+  } catch(err) { showAIError(err.message); }
+  finally { document.getElementById('analyzeBtn').disabled=false; document.getElementById('ai-analyzing').style.display='none'; }
 };
 
-// ── Shared AI helpers ─────────────────────────────────────────────────────
 const AI_PROMPT = `You are analyzing an Owner Decision email for the Sacramento Republic FC stadium project (HRA Project #2340). Extract the following and respond ONLY with a valid JSON object, no markdown, no preamble:
 {
   "date": "YYYY-MM-DD",
@@ -1308,64 +1261,41 @@ If a field cannot be determined, use an empty string. For date, use today if not
 async function callClaudeAndPopulate(content) {
   const apiKey = localStorage.getItem('anthropic_api_key') || '';
   if (!apiKey) throw new Error('No API key set — click ⚙ Settings and enter your Anthropic API key.');
-
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content }]
-    })
+    headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+    body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{ role:'user', content }] })
   });
-
-  if (!resp.ok) {
-    const body = await resp.text().catch(() => '');
-    throw new Error(`API returned ${resp.status}${body ? ': ' + body.slice(0,120) : ''}`);
-  }
-
+  if (!resp.ok) { const b=await resp.text().catch(()=>''); throw new Error(`API returned ${resp.status}${b?': '+b.slice(0,120):''}`); }
   const data   = await resp.json();
-  const raw    = data.content.map(c => c.text || '').join('');
-  const clean  = raw.replace(/```json|```/g, '').trim();
+  const raw    = data.content.map(c=>c.text||'').join('');
+  const clean  = raw.replace(/```json|```/g,'').trim();
   const parsed = JSON.parse(clean);
-
   if (parsed.date)    document.getElementById('f-date').value    = parsed.date;
   if (parsed.from)    document.getElementById('f-from').value    = parsed.from;
   if (parsed.topic)   document.getElementById('f-topic').value   = parsed.topic;
   if (parsed.summary) document.getElementById('f-summary').value = parsed.summary;
   if (parsed.notes)   document.getElementById('f-notes').value   = parsed.notes;
   if (parsed.status)  document.getElementById('f-status').value  = parsed.status;
-  if (parsed.company) {
-    const sel = document.getElementById('f-company');
-    for (let o of sel.options) { if (o.value === parsed.company) { sel.value = parsed.company; break; } }
-  }
-
+  if (parsed.company) { const sel=document.getElementById('f-company'); for (let o of sel.options) { if(o.value===parsed.company){sel.value=parsed.company;break;} } }
   document.getElementById('ai-badge').style.display = '';
   showStep('form');
 }
 
 function showAIError(msg) {
-  const isCORS = msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('network') || msg.toLowerCase().includes('failed');
-  document.getElementById('ai-error-msg').textContent = isCORS
-    ? '⚠ Could not reach the API — this is usually a CORS/network issue when opening the file locally (not a problem with your PDF).'
-    : '⚠ Could not analyze: ' + msg;
+  const isCORS = msg.toLowerCase().includes('fetch')||msg.toLowerCase().includes('network')||msg.toLowerCase().includes('failed');
+  document.getElementById('ai-error-msg').textContent = isCORS ? '⚠ Could not reach the API — CORS/network issue when opening locally.' : '⚠ Could not analyze: '+msg;
   document.getElementById('ai-error').style.display = '';
 }
 
-// Save button
 document.getElementById('saveModal').onclick = () => {
   const topic = document.getElementById('f-topic').value.trim();
   if (!topic) { showToast('Please enter a subject / topic'); return; }
-
   const pdfLink = document.getElementById('f-pdf-link').value.trim();
-
-  const newRow = {
+  const odNum   = newOdNum();
+  const newRow  = {
     id:      nextId++,
+    odNum:   odNum,
     date:    document.getElementById('f-date').value,
     topic:   topic,
     summary: document.getElementById('f-summary').value.trim(),
@@ -1380,7 +1310,7 @@ document.getElementById('saveModal').onclick = () => {
   rows.push(newRow);
   save(); render(); updateKPIs();
   closeModal();
-  showToast('New direction added ✓');
+  showToast(`${odNum} added ✓`);
 };
 
 // ─── TOAST ───────────────────────────────────────────────────────────────
@@ -1409,22 +1339,16 @@ function openEditModal(row) {
   document.getElementById('edit-overlay').classList.add('open');
 }
 
-function closeEditModal() {
-  document.getElementById('edit-overlay').classList.remove('open');
-  editingRow = null;
-}
+function closeEditModal() { document.getElementById('edit-overlay').classList.remove('open'); editingRow=null; }
 
 document.getElementById('closeEdit').onclick  = closeEditModal;
 document.getElementById('cancelEdit').onclick = closeEditModal;
-document.getElementById('edit-overlay').onclick = e => {
-  if (e.target === document.getElementById('edit-overlay')) closeEditModal();
-};
+document.getElementById('edit-overlay').onclick = e => { if(e.target===document.getElementById('edit-overlay')) closeEditModal(); };
 
 document.getElementById('saveEdit').onclick = () => {
   if (!editingRow) return;
   const topic = document.getElementById('e-topic').value.trim();
   if (!topic) { showToast('Subject / Topic is required'); return; }
-
   editingRow.date    = document.getElementById('e-date').value;
   editingRow.from    = document.getElementById('e-from').value.trim();
   editingRow.topic   = topic;
@@ -1433,21 +1357,15 @@ document.getElementById('saveEdit').onclick = () => {
   editingRow.status  = document.getElementById('e-status').value;
   editingRow.hra     = document.getElementById('e-hra').value;
   editingRow.company = document.getElementById('e-company').value;
-
   const pdfLink = document.getElementById('e-pdf-link').value.trim();
-  if (pdfLink) {
-    editingRow.pdfLink = pdfLink;
-    editingRow.file    = decodeURIComponent(pdfLink.split('/').pop().split('?')[0]);
-  } else {
-    editingRow.pdfLink = null;
-  }
-
+  if (pdfLink) { editingRow.pdfLink=pdfLink; editingRow.file=decodeURIComponent(pdfLink.split('/').pop().split('?')[0]); }
+  else { editingRow.pdfLink=null; }
   save(); render(); updateKPIs();
   closeEditModal();
   showToast('Direction updated ✓');
 };
 
-// ─── SHAREPOINT SETTINGS MODAL ────────────────────────────────────────────
+// ─── SETTINGS MODAL ──────────────────────────────────────────────────────
 function openSettings() {
   document.getElementById('sp-apikey-input').value  = localStorage.getItem('anthropic_api_key') || '';
   document.getElementById('sp-gas-input').value     = localStorage.getItem('gas_url') || '';
@@ -1457,50 +1375,41 @@ function openSettings() {
   document.getElementById('sp-test-result').style.display = 'none';
   document.getElementById('sp-overlay').classList.add('open');
 }
-function closeSettingsModal() {
-  document.getElementById('sp-overlay').classList.remove('open');
-}
+function closeSettingsModal() { document.getElementById('sp-overlay').classList.remove('open'); }
 
-document.getElementById('openSettings').onclick    = openSettings;
-document.getElementById('closeSettings').onclick   = closeSettingsModal;
-document.getElementById('cancelSettings').onclick  = closeSettingsModal;
-document.getElementById('sp-overlay').onclick = e => {
-  if (e.target === document.getElementById('sp-overlay')) closeSettingsModal();
-};
+document.getElementById('openSettings').onclick   = openSettings;
+document.getElementById('closeSettings').onclick  = closeSettingsModal;
+document.getElementById('cancelSettings').onclick = closeSettingsModal;
+document.getElementById('sp-overlay').onclick = e => { if(e.target===document.getElementById('sp-overlay')) closeSettingsModal(); };
 
 document.getElementById('saveSettings').onclick = () => {
   const apiKey = document.getElementById('sp-apikey-input').value.trim();
   if (apiKey) localStorage.setItem('anthropic_api_key', apiKey);
   const gasUrl = document.getElementById('sp-gas-input').value.trim();
-  if (gasUrl) { GAS_URL = gasUrl; localStorage.setItem('gas_url', gasUrl); }
-  SP_SITE   = document.getElementById('sp-site-input').value.trim().replace(/\/$/, '');
-  SP_PATH   = document.getElementById('sp-path-input').value.trim().replace(/\/$/, '');
-  SP_FOLDER = document.getElementById('sp-folder-input').value.trim().replace(/^\/|\/$/g, '');
-  localStorage.setItem('sp_site',   SP_SITE);
-  localStorage.setItem('sp_path',   SP_PATH);
+  if (gasUrl) { GAS_URL=gasUrl; localStorage.setItem('gas_url', gasUrl); }
+  SP_SITE   = document.getElementById('sp-site-input').value.trim().replace(/\/$/,'');
+  SP_PATH   = document.getElementById('sp-path-input').value.trim().replace(/\/$/,'');
+  SP_FOLDER = document.getElementById('sp-folder-input').value.trim().replace(/^\/|\/$/g,'');
+  localStorage.setItem('sp_site', SP_SITE);
+  localStorage.setItem('sp_path', SP_PATH);
   localStorage.setItem('sp_folder', SP_FOLDER);
-  closeSettingsModal();
-  render(); // refresh all document links
-  showToast('SharePoint settings saved ✓');
+  closeSettingsModal(); render(); showToast('SharePoint settings saved ✓');
 };
 
 document.getElementById('sp-test-btn').onclick = () => {
-  const site   = document.getElementById('sp-site-input').value.trim().replace(/\/$/, '');
-  const path   = document.getElementById('sp-path-input').value.trim().replace(/\/$/, '');
-  const folder = document.getElementById('sp-folder-input').value.trim().replace(/^\/|\/$/g, '');
-  const sub    = folder ? '/' + folder : '';
+  const site   = document.getElementById('sp-site-input').value.trim().replace(/\/$/,'');
+  const path   = document.getElementById('sp-path-input').value.trim().replace(/\/$/,'');
+  const folder = document.getElementById('sp-folder-input').value.trim().replace(/^\/|\/$/g,'');
+  const sub    = folder ? '/'+folder : '';
   const testFile = '251201_Green Rooms Owner Decision Email.pdf';
-  const url = site + path + sub + '/' + encodeURIComponent(testFile);
+  const url = site+path+sub+'/'+encodeURIComponent(testFile);
   const el  = document.getElementById('sp-test-result');
-  el.style.display = '';
-  el.style.background = '#f0f9ff';
-  el.style.borderColor = '#bae6fd';
-  el.style.color = '#0369a1';
-  el.innerHTML = '🔗 Test link (click to verify):<br><a href="' + url + '" target="_blank" rel="noopener" style="word-break:break-all;color:var(--hra);">' + url + '</a>';
+  el.style.display=''; el.style.background='#f0f9ff'; el.style.borderColor='#bae6fd'; el.style.color='#0369a1';
+  el.innerHTML = '🔗 Test link (click to verify):<br><a href="'+url+'" target="_blank" rel="noopener" style="word-break:break-all;color:var(--hra);">'+url+'</a>';
 };
 
 // ─── INIT ─────────────────────────────────────────────────────────────────
-load(); // async — renders from localStorage instantly, then syncs from Google Sheets
+load();
 </script>
 </body>
 </html>
