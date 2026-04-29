@@ -357,6 +357,16 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
 <!-- ─── PAGE ─────────────────────────────────────── -->
 <div class="page">
 
+  <!-- BACKUP REMINDER BANNER -->
+  <div id="backup-banner" style="display:none;background:linear-gradient(135deg,#b45309,#d97706);color:#fff;border-radius:8px;padding:12px 18px;margin-bottom:16px;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(180,83,9,0.3);">    <span style="font-size:20px;">💾</span>
+    <div style="flex:1;">
+      <div style="font-weight:700;font-size:13px;">📅 Friday Backup Reminder</div>
+      <div style="font-size:11px;opacity:0.9;margin-top:2px;">It's Friday — take 5 seconds to download your weekly backup and save it to OneDrive.</div>
+    </div>
+    <button onclick="exportBackup();dismissBackupBanner();" style="background:#fff;color:#b45309;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">⬇ Download Backup</button>
+    <button onclick="dismissBackupBanner();" title="Remind me next month" style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:6px;padding:7px 10px;font-size:12px;cursor:pointer;flex-shrink:0;">✕ Dismiss</button>
+  </div>
+
   <!-- KPI STRIP -->
   <div class="kpis">
     <div class="kpi">         <div class="kpi-lbl">Total</div>       <div class="kpi-num" id="k-total">0</div></div>
@@ -706,142 +716,218 @@ function spLink(filename) {
 // NOTE: Each seed row has a permanent `odNum` (OD-001, OD-002, …) that is
 // stored with the record and NEVER recalculated from row position.
 const SEED = [
-  {id:1,  odNum:'OD-001', date:'2025-12-01', topic:'Green Rooms',
+  {id:1, odNum:'OD-001', date:'2025-12-01', topic:'Green Rooms',
    summary:'No dedicated Green Room. The Auxiliary Locker Room will serve as the Green Room for concert events (up to 7 events/year per the Supplemental EIR). Path of travel between talent and fans to be managed operationally on event days.',
    notes:'Direction from Todd Dunivant. Path of travel concern is not a design issue — handled operationally. Communicated to HRA and Manica.',
-   from:'Todd Dunivant – SRFC',    status:'Completed',   hra:'??',   company:'HRA',      file:'251201_Green Rooms Owner Decision Email.pdf'},
-
-  {id:2,  odNum:'OD-002', date:'2025-12-02', topic:'Remove Living Wall',
+   from:'Todd Dunivant – SRFC', status:'Completed', hra:'Group', company:'HRA', file:'251201_Green Rooms Owner Decision Email.pdf', pdfLink:null},
+  {id:2, odNum:'OD-002', date:'2025-12-02', topic:'Remove Living Wall',
    summary:'Remove exterior living walls from project scope. Direction applies to all future design work and renderings.',
    notes:'Cost savings item. Communicated to HRA and Manica. Art Zargaryan directed removal.',
-   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'251202_Remove Living Wall Owner Decision Email.pdf'},
-
-  {id:3,  odNum:'OD-003', date:'2025-12-12', topic:'Canopy Truss – Tricord w/ Constant Top Chord',
+   from:'Art Zargaryan – Pegasus', status:'Completed', hra:'Group', company:'HRA', file:'251202_Remove Living Wall Owner Decision Email.pdf', pdfLink:null},
+  {id:3, odNum:'OD-003', date:'2025-12-12', topic:'Canopy Truss – Tricord w/ Constant Top Chord',
    summary:'Proceed with tricord truss with constant top chord for the SRFC canopy. This was Art\'s preferred option based on his review following the design meeting.',
    notes:'Email confirmation 12/12/2025. Direction issued to HRA, Manica, and MKA.',
-   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'MKA',      file:'251212_Tricord Truss with Constant Top Chord Canopy Owner Decision Email.pdf'},
-
-  {id:4,  odNum:'OD-004', date:'2025-12-12', topic:'X-Ray Room Removal',
+   from:'Art Zargaryan – Pegasus', status:'Completed', hra:'Group', company:'MKA', file:'251212_Tricord Truss with Constant Top Chord Canopy Owner Decision Email.pdf', pdfLink:null},
+  {id:4, odNum:'OD-004', date:'2025-12-12', topic:'X-Ray Room Removal',
    summary:'Remove the X-Ray Room from the SRFC stadium scope. Bank the cost savings.',
    notes:'Direction forwarded to HRA and Manica 12/12/2025.',
-   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'251212_X-Ray Room Owner Decision Email.pdf'},
-
-  {id:5,  odNum:'OD-005', date:'2025-12-16', topic:'Elevators – Level of Finish',
+   from:'Art Zargaryan – Pegasus', status:'Completed', hra:'Lacey', company:'HRA', file:'251212_X Ray Room Owner Decision Email.pdf', pdfLink:'https://hrarch2-my.sharepoint.com/personal/almaj_hrarch_com/Documents/2340%20SRFC%20Stadium_OneDrive/3_Code%20Analysis%20and%20Research/Owner%20Requirements%20and%20Program/pdfs/251212_X%20Ray%20Room%20Owner%20Decision%20Email.pdf?CT=1773417686868&OR=ItemsView&wdOrigin=OFFICE-OFFICE-METAOS.FILEBROWSER'},
+  {id:5, odNum:'OD-005', date:'2025-12-16', topic:'Elevators – Level of Finish',
    summary:'Owner decision on elevator level of finish to be incorporated into the baseline estimate and forwarded to the full design team.',
    notes:'Communicated to design team 12/16/2025. Level of finish decision to be reflected in 100% SD estimate.',
-   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'HRA',      file:'251216_Elevators Level of Finish Assumed in Baseline Estimate Owner Decision Email.pdf'},
-
-  {id:6,  odNum:'OD-006', date:'2025-12-16', topic:'Program for Corner Terraces at L250',
+   from:'Vanessa Cameron – Pegasus', status:'Not Started', hra:'Jared', company:'HRA', file:'251216_Elevators Level of Finish Assumed in Baseline Estimate Owner Decision Email.pdf', pdfLink:null},
+  {id:6, odNum:'OD-006', date:'2025-12-16', topic:'Program for Corner Terraces at L250',
    summary:'Program established for Corner Terraces at Level 250 per attached exhibit (007). Cybil to file email thread and attachment as a consolidated single PDF and update the decision log.',
    notes:'Exhibit 007 attached. Cybil Bryant to file consolidated PDF.',
-   from:'David Carlock – Machete', status:'Completed',   hra:'??',   company:'HRA',      file:'251216_Program for Corner Terraces at Level 250 Owner Decision Email.pdf'},
-
-  {id:7,  odNum:'OD-007', date:'2025-12-16', topic:'Restroom Consolidation',
+   from:'David Carlock – Machete', status:'In Progress', hra:'Nathaniel', company:'Multiple', file:'251216_Program for Corner Terraces at Level 250 Owner Decision Email.pdf', pdfLink:null},
+  {id:7, odNum:'OD-007', date:'2025-12-16', topic:'Restroom Consolidation',
    summary:'Owner direction on SRFC restroom consolidation issued. NOTE: Impact on underground/foundation was NOT factored into the current 95% SD estimate — to be caught in the next issuance (100% SD).',
    notes:'G&T (Kris Mitchell) confirmed the restroom consolidation impact is not in the current estimate. Will be reflected in 100% SD issuance.',
-   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'Multiple', file:'251216_Restroom Consolidation Owner Decision Email.pdf'},
-
-  {id:8,  odNum:'OD-008', date:'2026-01-20', topic:'Building Exterior Façade – East',
+   from:'Vanessa Cameron – Pegasus', status:'Completed', hra:'Jared', company:'HRA', file:'251216_Restroom Consolidation Owner Decision Email.pdf', pdfLink:null},
+  {id:8, odNum:'OD-008', date:'2026-01-20', topic:'Building Exterior Façade – East',
    summary:'Do NOT pursue glazing or clerestory windows at the East Club façade. Bank the costs. Reasons: (1) Most events are evening — limited benefit from natural light. (2) Views face Sims Metal — not desirable. (3) Not industry standard for premium clubs. (4) Added cost.',
    notes:'Decision: maintain opaque façade. Cost savings to be banked. Communicated to Manica.',
-   from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'Manica',   file:'260120_Building Exterior Facade Design East Owner Decision Email.pdf'},
-
-  {id:9,  odNum:'OD-009', date:'2026-01-20', topic:'Stadium Ops – 3 Decisions',
+   from:'Dustin Vicari – SRFC', status:'Completed', hra:'Group', company:'Manica', file:'260120_Building Exterior Facade Design East Owner Decision Email.pdf', pdfLink:null},
+  {id:9, odNum:'OD-009', date:'2026-01-20', topic:'Stadium Ops – 3 Decisions',
    summary:'(1) Offices under South Grandstands: bare bones finish only — no TVs, no wet bars, no special amenities. (2) Reusable Cups: no on-site washing — insufficient space and dishwashing capacity. (3) Box Office: max 4 windows (2 exterior, 2 interior), reduced from 6. Must include media credential pick-up window.',
    notes:'Three decisions in one thread. Dustin confirmed 1/17/2026. Molly Zinnikas relayed to HRA team 1/20/2026.',
-   from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'HRA',      file:'260120_Owner Program Decisions Email.pdf'},
-
+   from:'Dustin Vicari – SRFC', status:'In Progress', hra:'Lacey', company:'HRA', file:'260120 Owner Program Decisions Email.pdf', pdfLink:'https://hrarch2-my.sharepoint.com/personal/almaj_hrarch_com/Documents/2340%20SRFC%20Stadium_OneDrive/3_Code%20Analysis%20and%20Research/Owner%20Requirements%20and%20Program/pdfs/260120%20Owner%20Program%20Decisions%20Email.pdf?CT=1773417816530&OR=ItemsView&wdOrigin=OFFICE-OFFICE-METAOS.FILEBROWSER'},
   {id:10, odNum:'OD-010', date:'2026-01-26', topic:'L400 Hospitality Elevator',
    summary:'Proceed with dedicated elevator to Level 400 Hospitality Space in base scope. Art verbally approved 1/21; written email confirmation received 1/26.',
    notes:'Art verbal approval 1/21/2026. Written confirmation 1/26/2026. Molly Zinnikas relayed to HRA.',
-   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'L400_Hospitality Elevator Base Scope Owner Decision Email.pdf'},
-
+   from:'Art Zargaryan – Pegasus', status:'Completed', hra:'Group', company:'HRA', file:'L400 Hospitality Elevator Base Scope Owner Decision Email.pdf', pdfLink:'https://hrarch2-my.sharepoint.com/personal/almaj_hrarch_com/Documents/2340%20SRFC%20Stadium_OneDrive/3_Code%20Analysis%20and%20Research/Owner%20Requirements%20and%20Program/pdfs/L400%20Hospitality%20Elevator%20Base%20Scope%20Owner%20Decision%20Email.pdf?CT=1773417863146&OR=ItemsView&wdOrigin=OFFICE-OFFICE-METAOS.FILEBROWSER'},
   {id:11, odNum:'OD-011', date:'2026-01-27', topic:'Canopy Coverage / Extent',
    summary:'Final Owner decision on canopy coverage and extent. Proceed per attached exhibit 082. Additional context included in email correspondence.',
    notes:'Exhibit 082 attached. Additional email context included in file.',
-   from:'David Carlock – Machete', status:'Completed',   hra:'??',   company:'HRA',      file:'260127_Canopy Cover and Extent Owner Decision Email.pdf'},
-
+   from:'David Carlock – Machete', status:'Completed', hra:'Brandt', company:'HRA', file:'260127_Canopy Cover and Extent Owner Decision Email.pdf', pdfLink:null},
   {id:12, odNum:'OD-012', date:'2026-01-27', topic:'NW Level 250 Platform Ledge',
    summary:'Proceed with Baseline Option for NW Level 250 Platform Edge. David Kelman confirmed receipt and direction to proceed.',
    notes:'Baseline option selected. Kelman confirmed: "We will proceed with the baseline option."',
-   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'Manica',   file:'260127_NW Level 250 Platform Ledge Owners Decision Email.pdf'},
-
+   from:'Vanessa Cameron – Pegasus', status:'Completed', hra:'Lacey', company:'HRA', file:'IQASnLV08zmGTI0rN26nYRrmAW2R2FQ8Y001imb56Z7LdkY', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQASnLV08zmGTI0rN26nYRrmAW2R2FQ8Y001imb56Z7LdkY?e=SfR9U2'},
   {id:13, odNum:'OD-013', date:'2026-01-28', topic:'East Club',
    summary:'Include East Club in base program. Identify opportunities in material and finish levels to reduce costs responsibly. East Club is seen as crucial to the overall fan experience and revenue generation.',
    notes:'Art: "Identify opportunities in material/finish levels to reduce costs." MaRS and Levy to coordinate programming of space.',
-   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'Multiple', file:'260128_East Club Owner Decision Email.pdf'},
-
+   from:'Art Zargaryan – Pegasus', status:'In Progress', hra:'Lacey', company:'EP Atelier', file:'IQCVo-FHlodLS4bQxgeXgDi3AeiG75TyrnUPRvwLgrqxYrA', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQCVo-FHlodLS4bQxgeXgDi3AeiG75TyrnUPRvwLgrqxYrA?e=HtfEbl'},
   {id:14, odNum:'OD-014', date:'2026-01-28', topic:'CMU Storage',
    summary:'Proceed with CMU (concrete masonry unit) for storage under grandstands. No change from base design. G&T confirmed Kingspan prefab alternate is cost neutral, but CMU is preferred for 1-hour fire rating (required if storing combustibles) and layout flexibility.',
    notes:'CMU chosen over Kingspan prefab. 1-hr fire rating required if combustibles stored. Cost neutral confirmed by G&T.',
-   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'CMU_Storage Owner Decision Email.pdf'},
-
+   from:'Art Zargaryan – Pegasus', status:'Completed', hra:'Lacey', company:'HRA', file:'IQCKaBDIUSnOTb791MirjRXQAdCQmDsX5Q6r3rf__qyDS4w', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQCKaBDIUSnOTb791MirjRXQAdCQmDsX5Q6r3rf__qyDS4w?e=dfcBiD'},
   {id:15, odNum:'OD-015', date:'2026-01-28', topic:'Club Within a Club (L200 Platinum Club)',
    summary:'Platinum Club (Club Within a Club) to remain in scope. Proceed with ~8–10 net sf/person (below the optimal 12 sf/person but accepted). Elevated grab-and-go destination with upscale F&B for Platinum customers. VVIP: 558 members × 0.8 = 447 effective; Grand Hall: 1,698 × 0.8 = 1,359 effective. Both MaRS and Levy to be in lockstep on design and F&B programming.',
    notes:'VVIP: 558×0.8=447 members; Grand Hall: 1698×0.8=1359 members. MaRS & Levy to program space together. Differentiation important to overall sales planning.',
-   from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'Multiple', file:'Club_within a Club Owner Decision Email.pdf'},
-
+   from:'Dustin Vicari – SRFC', status:'In Progress', hra:'Group', company:'EP Atelier', file:'IQB22IbR42T3SbNnQ1Z1VW1WAVFBx8oA8FEkMOEZh7IxUcY', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQB22IbR42T3SbNnQ1Z1VW1WAVFBx8oA8FEkMOEZh7IxUcY?e=gqVwMT'},
   {id:16, odNum:'OD-016', date:'2026-01-28', topic:'Islands in Suites',
    summary:'Include islands within Premium Suites with no associated MEP. Islands encourage fans to spend time at seats rather than dwelling in the suite. Hard costs to be included within G&T\'s approved cost/sf Interiors budget. Sink centered with island. Coordinate revised kitchen equipment layout with Ricca/SSR/MaRS for 50% DD milestone.',
-   notes:'Kitchen layout per MaRS DP4 mark-up transmitted 1/23/2026 (DP4 L000 Suites). Coordinate for 50% DD milestone.',
-   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'Multiple', file:'Islands in Suites Owner Decision Email.pdf'},
-
+   notes:'Kitchen layout per MaRS DP4 mark-up transmitted 1/23/2026 (DP4 L000 Suites). Coordinate for 50% DD milestone.
+Islands in Suites: no food service equipment, no power, no casework. Make them all open below so that bar stools can fully slide/tuck in underneath. Seating qty. should be whatever you can comfortably fit, so we will look to you to define that.',
+   from:'Vanessa Cameron – Pegasus', status:'In Progress', hra:'Group', company:'EP Atelier', file:'Islands in Suites Owner Decision Email.pdf', pdfLink:null},
   {id:17, odNum:'OD-017', date:'2026-01-30', topic:'Staff/Team Parking Lot, Truck Dock, Trash Enclosure',
    summary:'Proceed with NW Parking Lot reconfiguration per attached exhibit. New layout provides greater circulation and additional parking stalls. Trash compactor relocated to accommodate 3 compactors + organics bins with more direct waste truck access. Manica to resolve trash room clearance concerns. Coordinate with forthcoming Staff Building revised layout.',
    notes:'Rob Hedrick initiated. Stantec and civil/landscape to update drawings. Staff Building revised layout forthcoming — include in coordinated NW Parking Lot update along with Bike Valet revisions.',
-   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'Stantec',  file:'Staff and Team Parking Lot Truck Dock Trash Enclosure Owner Decision Email.pdf'},
-
+   from:'Art Zargaryan – Pegasus', status:'Completed', hra:'Jared', company:'Multiple', file:'Staff and Team Parking Lot Truck Dock Trash Enclosure Owner Decision Email.pdf', pdfLink:null},
   {id:18, odNum:'OD-018', date:'2026-02-05', topic:'HVAC – Option 1 (Partial VRF Coil AHUs)',
    summary:'Proceed with HVAC Option 1 (Partial VRF Coil AHUs) instead of basis-of-design (All Packaged Rooftop Heat Pump Units). Option 1 is $31k above base budget — drawing from contingency. Key benefits: (1) Lessens canopy height conflict — more HVAC equipment on mezzanine vs. roof. (2) More energy efficient — current energy model barely meeting code compliance with base design.',
    notes:'$31k above base budget; drawn from contingency. HRA/SSR still studying if Option 1 fully resolves canopy height issue — not yet confirmed at time of decision.',
-   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'SSR - Mech',file:'SRFC_HVAC Owner Decision Email.pdf'},
-
+   from:'Art Zargaryan – Pegasus', status:'Completed', hra:'Nathaniel', company:'SSR - Mech', file:'IQA2EqLCQMqhQKQYvxYXCbt5Af5psBS2CZiMCpMu6aT9Iq8', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQA2EqLCQMqhQKQYvxYXCbt5Af5psBS2CZiMCpMu6aT9Iq8?e=wG0bVO'},
   {id:19, odNum:'OD-019', date:'2026-02-06', topic:'Canopy Trellis Corners',
    summary:'Proceed with base design for canopy trellis corners (metal clad louvers/fins). No alternate options to be pursued. Options 1–4 were all incremental costs above base with no compelling design improvement.',
    notes:'Dustin: "My vote would be to maintain the current aesthetic." Options 1–4 all cost adds vs. base. Art confirmed proceed with base.',
-   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'Canopy Trellis Corners Owner Decision Email.pdf'},
-
+   from:'Art Zargaryan – Pegasus', status:'Completed', hra:'Brandt', company:'HRA', file:'Canopy Trellis Corners Owner Decision Email.pdf', pdfLink:null},
   {id:20, odNum:'OD-020', date:'2026-02-06', topic:'Loge Boxes – Telecom / Power Requirements',
    summary:'Owner decision on Loge Boxes telecom and power requirements. Refer to attached Loge Seating Owner Program Requirements document for full scope of power and data requirements at each loge position.',
    notes:'Loge Seating Owner Program Requirements document attached to email. Coordinate with SSR for implementation.',
-   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'SSR - Elec',file:'260206_Loge Boxes  Telecom and Power Requirements Owner Decision Email.pdf'},
-
+   from:'Vanessa Cameron – Pegasus', status:'Not Started', hra:'Nathaniel', company:'Multiple', file:'IQBpiWhpbFXUSrZP-Kei5rRkAZdHdgkRYgCkkX1FQma0i-M', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQBpiWhpbFXUSrZP-Kei5rRkAZdHdgkRYgCkkX1FQma0i-M?e=M74Dja'},
   {id:21, odNum:'OD-021', date:'2026-02-06', topic:'Staff Building Layout & Lockers',
    summary:'Staff Building to remain within ~5.7ksf footprint. Use smaller orange lockers to maximize quantity within Employee Locker Room. Security Office minimum 250 sf (shift WC if needed). G&T Owner Allowance #4 is voided. Break Room and Changing Room requirements to follow in a separate communication.',
    notes:'Clarification sent 2/10: all lockers = smaller orange version throughout. Security Office min 250sf. Coordinate arch, civil, and landscape for NW Parking Lot changes.',
-   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'HRA',      file:'260206_Staff Building Layout and Lockers Owner Decision Email.pdf'},
-
+   from:'Vanessa Cameron – Pegasus', status:'Needs Review', hra:'Jared', company:'HRA', file:'260206_Staff Building Layout and Lockers Owner Decision Email.pdf', pdfLink:null},
   {id:22, odNum:'OD-022', date:'2026-02-10', topic:'West Façade Design Study',
    summary:'Proceed with base design option for West Façade. Additionally explore: (1) Alternate louver color — black instead of tan per Dustin\'s preference. (2) Eliminate louvers at corner stairwells for cost savings (stairwells would be open per Manica Option 2). Option 1 adds $617k; Option 2 adds $7.6M — both considered cost-prohibitive.',
    notes:'Dustin prefers exploring different louver color vs. larger material changes. Stairwell louver elimination to be studied for cost savings.',
-   from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'Manica',   file:'West Facade Design Study Owner Decision Email.pdf'},
-
-  {id:23, odNum:'OD-023', date:'2026-02-11', topic:"Non-Vehicle Rated Turf / Subgrade at Supporter's Area",
-   summary:"Small golf cart/quad vehicle rated materials required at Supporter's Area for ongoing maintenance. Food trucks are NOT planned for this area. AirDrain + aggregate base sufficient for golf cart/quad; concrete subslab required only for larger vehicles. Geotech recommendations for aggregate base depth still pending from Stantec.",
+   from:'Dustin Vicari – SRFC', status:'Needs Review', hra:'Lacey', company:'Manica', file:'West Facade Design Study Owner Decision Email.pdf', pdfLink:null},
+  {id:23, odNum:'OD-023', date:'2026-02-11', topic:'Non-Vehicle Rated Turf / Subgrade at Supporter\'s Area',
+   summary:'Small golf cart/quad vehicle rated materials required at Supporter\'s Area for ongoing maintenance. Food trucks are NOT planned for this area. AirDrain + aggregate base sufficient for golf cart/quad; concrete subslab required only for larger vehicles. Geotech recommendations for aggregate base depth still pending from Stantec.',
    notes:'Stantec: generic detail in current drawings is likely overkill for golf cart use. Collaborate across disciplines (DW, Stantec, HRA) for cost-effective detail solution.',
-   from:'Vanessa Cameron – Pegasus',status:'Completed',  hra:'??',   company:'Stantec',  file:'NonVehicle Rated Turf and Subgrade at Supporters Area.pdf'},
-
+   from:'Vanessa Cameron – Pegasus', status:'Needs Review', hra:'Arkadi', company:'Stantec', file:'IQBOuOzybrw-SavnabLxn7KsAfGmR2DHGR514oYSv3Cn1JE', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQBOuOzybrw-SavnabLxn7KsAfGmR2DHGR514oYSv3Cn1JE?e=x4E69X'},
   {id:24, odNum:'OD-024', date:'2026-02-13', topic:'Audio / TVs in Elevators',
    summary:'Audio and TVs are NOT required in elevators. Rationale: not in base budget, elevator trips are short, and it is not industry standard practice for stadium elevators.',
    notes:'Confirmed by Dustin Vicari following the 2/13/2026 Owner Program Requirements meeting.',
-   from:'Dustin Vicari – SRFC',    status:'Completed',   hra:'??',   company:'HRA',      file:'260213_AUDIO AND TVSIN ELEVATORS OWNER DECISION EMAIL.pdf'},
-
+   from:'Dustin Vicari – SRFC', status:'Needs Review', hra:'Jared', company:'HRA', file:'260213_AUDIO AND TVSIN ELEVATORS OWNER DECISION EMAIL.pdf', pdfLink:null},
   {id:25, odNum:'OD-025', date:'2026-02-20', topic:'Quantity & Size of Scoreboards (OD #113)',
    summary:'Two scoreboards at SW and NE corners, both sized at 20\' × 92\'. Estimated ~$3–4M cost reduction versus prior configuration. Per OD #99 update, scoreboards are to remain curved.',
    notes:'Per OD #113. Scoreboards to remain curved — confirmed via OD #99 update (see OD #26).',
-   from:'Art Zargaryan – Pegasus', status:'Completed',   hra:'??',   company:'HRA',      file:'113_Quantity of Scoreboards.pdf'},
-
+   from:'Art Zargaryan – Pegasus', status:'Not Started', hra:'Lacey', company:'HRA', file:'113_Quantity of Scoreboards.pdf', pdfLink:null},
   {id:26, odNum:'OD-026', date:'2026-03-09', topic:'Multi-OD Updates (#99, 125, 126, 135)',
    summary:'#99: Scoreboards to remain curved (update to prior decision). #125: Grow Light Rooms to expand in size — doors to relocate per new room dimensions. #126: Louvers to be shown as Light Gray in marketing renderings; final color/materials to undergo separate Owner review process. #135: No futureproofing infrastructure for scoreboards or signage at L250 SW & NE corners.',
    notes:'Multiple OD updates consolidated in single email 3/9/2026. Final louver color/materials still to be determined via separate review.',
-   from:'Roman James – Pegasus',   status:'Completed',   hra:'??',   company:'Multiple', file:'99_125_126_135_Owner Decision Updates.pdf'},
+   from:'Roman James – Pegasus', status:'In Progress', hra:'Lacey', company:'Multiple', file:'IQCmOpYmyCgvSIlyoY15QeNWAX6BSHlGhoEaB2pTCmxGfK0', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQCmOpYmyCgvSIlyoY15QeNWAX6BSHlGhoEaB2pTCmxGfK0?e=EpN5rD'},
+  {id:100, odNum:'OD-027', date:'2025-12-22', topic:'VSG Tracker',
+   summary:'Continue to review / coordinate with the VSG tracker at every milestone.',
+   notes:'https://www.dropbox.com/scl/fi/5o9e5409h0mxv5487qj3g/SRFCStadium_VSGPlanReview_20251219_CommentTracker.xlsx?rlkey=u5cfjzlctgu41z4pw6yrpg5gs&st=l2sootlc&dl=0',
+   from:'Vanessa - Pegasus', status:'On Going', hra:'Group', company:'HRA', file:null, pdfLink:null},
+  {id:101, odNum:'OD-028', date:'2026-02-02', topic:'Bike Stall Count',
+   summary:'Follow-up / coordinate total bike parking required on site. 100 short-term 10 long-term required per Z25-042 Conditions of Approval. ETMP requires the project to accommodate up to 400 temp bike valet.',
+   notes:'DW is tracking',
+   from:'Rob - Pegasus', status:'Needs Review', hra:'Arkadi', company:'HRA', file:null, pdfLink:null},
+  {id:102, odNum:'OD-029', date:'2026-01-20', topic:'L200 Grand Hall Space Plan Approval',
+   summary:'Owner approved preferred space plan for L200 Grand Hall/CWAC referenced on pdf page 41. Levy also vetted and confirmed this layout as preferred from a food service program perspective. The approved layout will serve as the basis for architectural background updates and interior design concept development',
+   notes:'HRA Team needs to update architectural background this week so Edith can develop Interior Design concept with fixed walls and containers. Levy and MaRS need to workshop separately and collaborate on preparing operational presentation for L200 Grand Hall and Platinum Club food service functionality.',
+   from:'Vanessa Cameron – Pegasus Development', status:'In Progress', hra:'Phil', company:'HRA', file:null, pdfLink:null},
+  {id:103, odNum:'OD-030', date:'2026-01-05', topic:'MLS Compliance Checklist',
+   summary:'Continue to coordinate and review the MLS checklist at every milestone',
+   notes:'https://www.dropbox.com/scl/fi/jrg238glchosnuwrvvfk5/20251209-SRFC_MLS_Stadium_Checklist.xlsx?rlkey=hs167oag98pxnxr628pu3z7et&e=1&st=udzgif8x&dl=0',
+   from:'Vanessa - Pegasus', status:'On Going', hra:'Group', company:'HRA', file:null, pdfLink:null},
+  {id:104, odNum:'OD-031', date:'2025-12-22', topic:'Bollard Protection',
+   summary:'Team to add vehicular traffic-rated bollards at all main entries / pedestrian plaza',
+   notes:'Need to coordinate footings',
+   from:'Vanessa Cameron – Pegasus', status:'In Progress', hra:'Arkadi', company:'HRA', file:null, pdfLink:null},
+  {id:105, odNum:'OD-032', date:'2025-12-10', topic:'Presentation sf/person metrics',
+   summary:'Design Team to include sf/person metrics on all floor plans moving forward; consider seating mix selection in sf/person',
+   notes:'',
+   from:'Vanessa Cameron – Pegasus', status:'On Going', hra:'Group', company:'Multiple', file:null, pdfLink:null},
+  {id:106, odNum:'OD-033', date:'2026-03-12', topic:'DHW Consultant Scope and Fee Approval',
+   summary:'Door hardware consultant (DHC) scope clarified and $43k fee approved for HRA ASR-05. DHC will author door hardware specifications only but must coordinate with all Division 08 sections including aluminum storefronts, custom finishes, and RAL colors. DHC responsible for reviewing door hardware elements in submittals from other sections and coordinating across all disciplines including door schedules, details, thresholds, fire/smoke seals, security access, bollards, automatic operators, and electrification requirements per architectural and electrical drawings.',
+   notes:'Include DHW scope and fee in HRA\'s ASR-05 for 20k Capacity Stadium. DHC must stay engaged throughout design development and revise specs with design changes. Coordination with multiple disciplines required to prevent miscoordination. QC responsibility between HRA and DHC to be determined.',
+   from:'Vanessa Cameron – Pegasus Build', status:'In Progress', hra:'Alma', company:'HRA', file:'IQABQKpEXk97TLvKUKZNQ7XUAUyu2lr6GQgeV31iIv87GR4', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQABQKpEXk97TLvKUKZNQ7XUAUyu2lr6GQgeV31iIv87GR4?e=z23D0D'},
+  {id:107, odNum:'OD-034', date:'2026-03-11', topic:'SRFC Brand Guidelines Distribution',
+   summary:'Vanessa Cameron distributed the 2025 SRFC Official Brand Guidelines to the design team, including David Kelman from Manica, HRA Group, and Edith Ponciano from EP Atelier. She later provided full guidelines with additional information as requested. The brand guidelines document will serve as the official branding standards for the Sacramento Republic FC stadium project.',
+   notes:'Design team members should review the brand guidelines for project compliance. All team members copied on the email should coordinate their design work according to the established SRFC branding standards.',
+   from:'Vanessa Cameron – Pegasus Development', status:'On Going', hra:'Group', company:'Elevate', file:'IQDwnIR4-nUqTKrqjOEv8elEAazV12DbvTtumkd0cyYPANU', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQDwnIR4-nUqTKrqjOEv8elEAazV12DbvTtumkd0cyYPANU?e=qw2KIJ'},
+  {id:108, odNum:'OD-035', date:'2026-03-09', topic:'Stadium Bowl Railing Design Requirements',
+   summary:'Design team interpreted owner\'s directive for point #2 regarding glass guardrails for East and West Club Premium Seats/Loge/Suites. Owner had previously specified glass guardrail requirements and requested design team confirm their markup meets owner\'s requirements per diagram distributed on 3/5/26. Design team recommends ownership or owner\'s representative review the exhibit and provide comment or confirmation to avoid unintended consequences.',
+   notes:'Owner or owner\'s rep needs to review design team\'s interpretation and provide confirmation. This relates to the broader railing design decisions including cable railings, curb height minimization, and seating relocations at corners near large vomitories.',
+   from:'David Kelman – Manica', status:'In Progress', hra:'Chris', company:'Manica', file:'IQD-0opXjwr4Q5_HhfIb1v0qAZ4_cjkJqGdMJRoWpigQqmA', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQD-0opXjwr4Q5_HhfIb1v0qAZ4_cjkJqGdMJRoWpigQqmA?e=1vZaev'},
+  {id:109, odNum:'OD-036', date:'2026-03-06', topic:'Exterior Renderings Suite Sales ASR',
+   summary:'Approved additional scope for Manica to provide 12 exterior renderings for suite sales at a total cost of $10,000. This scope is to be included in HRA 20k Stadium ASR #05. The scope was previously discussed between Kelman and Dustin and has been approved to proceed.',
+   notes:'David Kelman is preparing an ASR document and plans to send it to HRA by Monday. The additional rendering scope needs to be incorporated into the existing ASR #05.',
+   from:'Vanessa Cameron – Pegasus Development', status:'Not Started', hra:'Chris', company:'Manica', file:'IQAKsYDjwcsQRK2RkVw4qKmGAURcingjJPQanJSEoIVzf5w', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQAKsYDjwcsQRK2RkVw4qKmGAURcingjJPQanJSEoIVzf5w?e=XbeUUo'},
+  {id:110, odNum:'OD-037', date:'2026-03-06', topic:'Stadium Seating Bowl Numbering Convention Decision',
+   summary:'Decision made to use traditional seating numbering scheme where seat 1 starts at the right when facing the field, maintaining this convention around the entire stadium bowl. Suggested that the room identification will use level letter convention (E for Event level, 1 for main concourse, M for Mezzanine)  Fire Marshall requirements for room numbering in the jurisdiction should be researched to avoid future compliance issues.',
+   notes:'Design team should verify local Fire Marshall requirements for room numbering conventions before finalizing. Coordinate seating numbering with wayfinding signage consultant.',
+   from:'Dustin – Sacramento Republic FC', status:'In Progress', hra:'Nathaniel', company:'Multiple', file:'IQBHTarqKQFkTIohRsWcf4v1AUkW3be5rLxRdPGzwxzF7xw', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQBHTarqKQFkTIohRsWcf4v1AUkW3be5rLxRdPGzwxzF7xw?e=K2GcSd'},
+  {id:111, odNum:'OD-038', date:'2026-03-04', topic:'SSR Commissioning Specifications Addition',
+   summary:'Pegasus Development has decided to add commissioning specifications authoring to SSR\'s scope of work. SSR will author project-specific commissioning specifications in the Project Manual for the MEP systems they are designing. Once a Commissioning Agent is engaged pre-IFC, they will review the draft specifications and further develop them with the Design Team. This additional scope is approved for $6,000 and will be included in the existing $20,000 ASR.',
+   notes:'HRA confirmed inclusion of this scope. Commissioning Agent engagement is pending for pre-IFC review and collaboration on specification development.',
+   from:'Vanessa Cameron – Pegasus Development', status:'Not Started', hra:'Chris', company:'SSR - Mech', file:'IQB6grfxVcZLR7dxvYnen6fhAVtdvRn2ZsmdHDnhnQhleT8', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQB6grfxVcZLR7dxvYnen6fhAVtdvRn2ZsmdHDnhnQhleT8?e=ZVS3JQ'},
+  {id:112, odNum:'OD-039', date:'2026-02-12', topic:'Landscape Fanzone Seating Mix',
+   summary:'The owner decided to reduce the total seating shown in the fanzone landscape design and provide a combination of seating options including seated picnic tables, standing high boy tables, and Adirondack chairs.',
+   notes:'Must coordinate with Cini Little who is studying additional temporary trash enclosures adjacent to concession buildings.',
+   from:'Owner – SRFC', status:'In Progress', hra:'Jared', company:'Design Workshop', file:'IQBKEtwP4IqERJG6s5kcx6sFAYFo6xU5gfilh4OIJSv4GRY', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQBKEtwP4IqERJG6s5kcx6sFAYFo6xU5gfilh4OIJSv4GRY?e=H9Dq11'},
+  {id:113, odNum:'OD-040', date:'2026-02-12', topic:'Landscape Railyard Confluence Gate Theme',
+   summary:'Owner has decided to proceed with the Railyard Confluence theme at all gate locations and not proceed with the Riverwalk Gate theme. The landscape design should consider incorporating existing boulders that were discovered on site during rough grading. The design must coordinate with HLB\'s concept lighting design.',
+   notes:'Design Workshop is the responsible firm. Must coordinate with HLB for concept lighting design integration. Consider incorporating discovered site boulders into landscape design.',
+   from:'Owner – SRFC', status:'Needs Review', hra:'Arkadi', company:'Design Workshop', file:'IQBKEtwP4IqERJG6s5kcx6sFAYFo6xU5gfilh4OIJSv4GRY', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQBKEtwP4IqERJG6s5kcx6sFAYFo6xU5gfilh4OIJSv4GRY?e=H9Dq11'},
+  {id:114, odNum:'OD-041', date:'2026-02-12', topic:'Paving Material Decision Pending',
+   summary:'Owner decision on Cast-in-Place Concrete vs. Unit Pavers for landscape paving is still under review and cost analysis. No direction has been issued yet and paving design should not be advanced until owner direction is received.',
+   notes:'Do not advance paving design until owner direction is received. Status indicated as Needs Review.',
+   from:'Owner – SRFC', status:'Completed', hra:'Arkadi', company:'Design Workshop', file:'IQBKEtwP4IqERJG6s5kcx6sFAYFo6xU5gfilh4OIJSv4GRY', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQBKEtwP4IqERJG6s5kcx6sFAYFo6xU5gfilh4OIJSv4GRY?e=H9Dq11'},
+  {id:115, odNum:'OD-042', date:'2026-02-12', topic:'Landscape Fanzone Turf and Concrete Bands',
+   summary:'The owner directed integration of drainage and in-ground lighting systems into concrete bands within the fanzone landscape design. Turf width must be consistent with the modular size of material being used. All turf areas should be shown in Day 2 condition in design drawings and presentations until further direction is provided.',
+   notes:'Design Workshop is the responsible firm for implementing these landscape requirements. Team should coordinate drainage and lighting integration with concrete band design and ensure turf sizing matches material modularity.',
+   from:'Owner – SRFC', status:'In Progress', hra:'Arkadi', company:'Design Workshop', file:'IQBKEtwP4IqERJG6s5kcx6sFAYFo6xU5gfilh4OIJSv4GRY', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQBKEtwP4IqERJG6s5kcx6sFAYFo6xU5gfilh4OIJSv4GRY?e=H9Dq11'},
+  {id:116, odNum:'OD-043', date:'2026-02-12', topic:'Fanzone Umbrellas Not Required',
+   summary:'Umbrellas are not needed in the Fanzone due to natural shade and the typical time of day of most events. The decision was made to remove umbrellas from the Fanzone design.',
+   notes:'',
+   from:'Owner – SRFC', status:'Needs Review', hra:'Arkadi', company:'Design Workshop', file:'IQBKEtwP4IqERJG6s5kcx6sFAYFo6xU5gfilh4OIJSv4GRY', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQBKEtwP4IqERJG6s5kcx6sFAYFo6xU5gfilh4OIJSv4GRY?e=H9Dq11'},
+  {id:117, odNum:'OD-044', date:'2026-02-05', topic:'Exterior Lighting Main Entrances Area Preference',
+   summary:'Owner selected building-mounted area lighting (Option 1) over pole-mounted lighting for main entrances exterior lighting. Building-mounted option is likely more cost effective and avoids competing with light poles in the public right-of-way. Owner requested adding color and/or movement to the lighting.',
+   notes:'Confirm illuminated signage at pillars. Elevate fixtures to match color temperature specified by HLB for site lighting.',
+   from:'Owner – SRFC', status:'In Progress', hra:'Nathaniel', company:'HLB', file:'IQBOv9zIGLunR6Xj43DEwyyAAZN7Pnd_EMf8ymOcBgkWSqY', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQBOv9zIGLunR6Xj43DEwyyAAZN7Pnd_EMf8ymOcBgkWSqY?e=3Xqc9E'},
+  {id:118, odNum:'OD-045', date:'2026-02-05', topic:'Exterior Lighting Main Entrances Landscape',
+   summary:'Owner approves all landscape lighting options presented for main entrances, with particular preference for pathway lighting with patterned light dispersed.',
+   notes:'Advance pathway lighting with patterned dispersion as preferred direction.',
+   from:'Owner – SRFC', status:'In Progress', hra:'Chris', company:'HLB', file:'IQBOv9zIGLunR6Xj43DEwyyAAZN7Pnd_EMf8ymOcBgkWSqY', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQBOv9zIGLunR6Xj43DEwyyAAZN7Pnd_EMf8ymOcBgkWSqY?e=3Xqc9E'},
+  {id:119, odNum:'OD-046', date:'2026-02-05', topic:'Exterior Lighting Main Entrances Hardscape Accent',
+   summary:'Owner selected Ingrade Sparkle for hardscape accent lighting at main entrances. Option 1 (linear ingrade) was rejected and is not to be pursued.',
+   notes:'Advance with Ingrade Sparkle. Option 1 crossed out and not to be pursued.',
+   from:'Owner – SRFC', status:'In Progress', hra:'Chris', company:'HLB', file:'IQBOv9zIGLunR6Xj43DEwyyAAZN7Pnd_EMf8ymOcBgkWSqY', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQBOv9zIGLunR6Xj43DEwyyAAZN7Pnd_EMf8ymOcBgkWSqY?e=3Xqc9E'},
+  {id:120, odNum:'OD-047', date:'2026-02-05', topic:'Exterior Lighting Field Level Dining Terrace',
+   summary:'Catenary lighting (Option 1) is the preferred option for the Dining Terrace due to better light distribution across the area. However, the Owner requests HLB explore alternate options other than catenary that achieve a similar even distribution of light.',
+   notes:'HLB to develop and present alternate non-catenary options that achieve comparable light distribution.',
+   from:'Owner – SRFC', status:'In Progress', hra:'Chris', company:'HLB', file:'IQBOv9zIGLunR6Xj43DEwyyAAZN7Pnd_EMf8ymOcBgkWSqY', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQBOv9zIGLunR6Xj43DEwyyAAZN7Pnd_EMf8ymOcBgkWSqY?e=3Xqc9E'},
+  {id:121, odNum:'OD-048', date:'2026-02-05', topic:'Exterior Lighting Field Level Circulation Pendants',
+   summary:'Owner selected Option 2 Small Scale Pendants to be positioned between trellis slats for exterior lighting in field level circulation zones. Owner has concerns about the finish durability of the pendant fixtures in exterior conditions and questions whether the light source size will provide sufficient illumination to meet required light levels.',
+   notes:'HLB must confirm finish material suitability for exterior conditions and verify that light source size is adequate to achieve required light levels.',
+   from:'Owner – SRFC', status:'In Progress', hra:'Chris', company:'HLB', file:'IQBOv9zIGLunR6Xj43DEwyyAAZN7Pnd_EMf8ymOcBgkWSqY', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQBOv9zIGLunR6Xj43DEwyyAAZN7Pnd_EMf8ymOcBgkWSqY?e=3Xqc9E'},
+  {id:122, odNum:'OD-049', date:'2026-03-13', topic:'Addition of Catwalk & Canopy Height Increase',
+   summary:'Owner has formally approved proceeding with the addition of the canopy catwalk and increasing the canopy height to accommodate it. The owner has also approved moving forward with option 2 per HRA\'s exhibit, which includes the skin to cover the façade from top to bottom.',
+   notes:'Design team should coordinate the catwalk addition with the canopy height increase and implement option 2 façade skin covering per HRA\'s exhibit.',
+   from:'Roman James – Pegasus Development', status:'In Progress', hra:'Brandt', company:'HRA', file:'IQDWwrU952h0Q7wULB09VCLpATr-kL3ceINSXwUw5HW5jmo', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQDWwrU952h0Q7wULB09VCLpATr-kL3ceINSXwUw5HW5jmo?e=fpjOgb'},
+  {id:123, odNum:'OD-050', date:'2026-03-16', topic:'test',
+   summary:'',
+   notes:'',
+   from:'—', status:'Not Started', hra:'??', company:'HRA', file:'IQDwnIR4-nUqTKrqjOEv8elEAazV12DbvTtumkd0cyYPANU', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQDwnIR4-nUqTKrqjOEv8elEAazV12DbvTtumkd0cyYPANU?e=39eBmh'},
+  {id:124, odNum:'OD-051', date:'2026-03-17', topic:'Building Envelope - Perforated Metal',
+   summary:'It has been confirmed by Ownership that we will be proceeding with Perforated Metal for the exterior cladding material.',
+   notes:'Update elevations/sections, details, and materials schedules',
+   from:'Roman James — Pegasus Development', status:'Not Started', hra:'Brandt', company:'HRA', file:'IQCSzWa-JKWgSp9XqVM522YGAfxBQ90WxTTCWtXuEtRDYfk', pdfLink:'https://hrarch2-my.sharepoint.com/:b:/g/personal/almaj_hrarch_com/IQCSzWa-JKWgSp9XqVM522YGAfxBQ90WxTTCWtXuEtRDYfk?e=2YbAQ2'}
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────
 const STORE_KEY = 'hra_od_v9'; // v9 — failsafe sync + export/import
 let rows = [];
 let nextId  = 100;   // internal unique ID counter (never shown)
-let nextOdNum = 27;  // next OD display number
+let nextOdNum = 52;  // next OD display number — 51 recovered entries
 let searchQ = '';
 let filterSt = 'All';
 let sortCol = 'num';
@@ -923,7 +1009,7 @@ async function load() {
     nextOdNum = bestLocal.nextOdNum || nextOdNum;
   } else {
     rows = migrateOdNums(SEED.map(r => ({...r})));
-    nextId = 100; nextOdNum = 27;
+    nextId = 100; nextOdNum = 52;
   }
 
   render(); updateKPIs();
@@ -1467,6 +1553,10 @@ function exportBackup() {
   a.href     = URL.createObjectURL(blob);
   a.download = 'HRA_OD_Backup_' + new Date().toISOString().slice(0,10) + '.json';
   a.click();
+  // Record backup timestamp so reminder resets for 30 days
+  localStorage.setItem(BACKUP_KEY, Date.now().toString());
+  const banner = document.getElementById('backup-banner');
+  if (banner) banner.style.display = 'none';
   showToast('Backup downloaded — ' + rows.length + ' entries saved ✓');
 }
 
@@ -1500,8 +1590,45 @@ function importBackup(event) {
   event.target.value = '';
 }
 
+// ─── BACKUP REMINDER BANNER ───────────────────────────────────────────────
+const BACKUP_KEY = 'hra_od_last_backup';
+
+function checkBackupReminder() {
+  const banner = document.getElementById('backup-banner');
+  if (!banner) return;
+
+  const now      = new Date();
+  const isFriday = now.getDay() === 5; // 0=Sun … 5=Fri … 6=Sat
+  if (!isFriday) return;               // only ever show on Fridays
+
+  // Check if already dismissed/downloaded THIS Friday
+  const last = localStorage.getItem(BACKUP_KEY);
+  if (last) {
+    const lastDate  = new Date(parseInt(last));
+    const sameWeek  =
+      lastDate.getFullYear() === now.getFullYear() &&
+      lastDate.getMonth()    === now.getMonth()    &&
+      lastDate.getDate()     === now.getDate();
+    if (sameWeek) return; // already handled today
+  }
+
+  banner.style.display = 'flex';
+}
+
+function dismissBackupBanner() {
+  const banner = document.getElementById('backup-banner');
+  if (banner) banner.style.display = 'none';
+  // Record dismissal as "last backup" so it won't show for another 30 days
+  localStorage.setItem(BACKUP_KEY, Date.now().toString());
+}
+
+// Override exportBackup to also record the backup timestamp
+const _origExport = exportBackup;
+// (exportBackup is defined above — we patch it after the fact in init)
+
 // ─── INIT ─────────────────────────────────────────────────────────────────
 load();
+setTimeout(checkBackupReminder, 1500); // check after data loads
 </script>
 </body>
 </html>
