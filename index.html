@@ -347,6 +347,11 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
     <button onclick="manualRefresh()" title="Pull latest from Google Sheets" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:#fff;padding:5px 8px;cursor:pointer;font-size:13px;line-height:1;">↻</button>
   </div>
   <button id="openSettings" title="Settings" style="margin-left:6px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:#fff;padding:6px 9px;cursor:pointer;font-size:15px;line-height:1;flex-shrink:0;">⚙</button>
+  <!-- Export / Import backup buttons -->
+  <button onclick="exportBackup()" title="Download a backup JSON file of all your data" style="margin-left:4px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:#fff;padding:5px 10px;cursor:pointer;font-size:11px;font-weight:700;line-height:1;flex-shrink:0;">⬇ Backup</button>
+  <label title="Restore from a backup JSON file" style="margin-left:4px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:#fff;padding:5px 10px;cursor:pointer;font-size:11px;font-weight:700;line-height:1;flex-shrink:0;">
+    ⬆ Restore<input type="file" accept=".json" onchange="importBackup(event)" style="display:none;">
+  </label>
 </header>
 
 <!-- ─── PAGE ─────────────────────────────────────── -->
@@ -833,7 +838,7 @@ const SEED = [
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────
-const STORE_KEY = 'hra_od_v8'; // bumped — triggers fresh load with odNum fields
+const STORE_KEY = 'hra_od_v9'; // v9 — failsafe sync + export/import
 let rows = [];
 let nextId  = 100;   // internal unique ID counter (never shown)
 let nextOdNum = 27;  // next OD display number
@@ -888,23 +893,35 @@ function newOdNum() {
 }
 
 async function load() {
-  try {
-    const cached = localStorage.getItem(STORE_KEY);
-    if (cached) {
-      const p = JSON.parse(cached);
-      if (p.rows && p.rows.length > 0) {
-        rows      = migrateOdNums(p.rows);
-        nextId    = p.nextId    || 100;
-        nextOdNum = p.nextOdNum || nextOdNum;
-      } else {
-        rows = migrateOdNums(SEED.map(r => ({...r})));
-        nextId = 100; nextOdNum = 27;
+  // ── Step 1: Load from localStorage immediately ──────────────────────────
+  // Also check older store keys in case of a version bump data loss
+  const keysToCheck = [STORE_KEY, 'hra_od_backup', 'hra_od_v8', 'hra_od_v7', 'hra_od_v6', 'hra_od_v5'];
+  let bestLocal = null;
+  let bestCount = 0;
+
+  for (const k of keysToCheck) {
+    try {
+      const raw = localStorage.getItem(k);
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p.rows && p.rows.length > bestCount) {
+          bestCount = p.rows.length;
+          bestLocal = p;
+          if (k !== STORE_KEY) {
+            // Migrate old key to current key
+            localStorage.setItem(STORE_KEY, raw);
+            showToast('✓ Recovered ' + p.rows.length + ' entries from previous session');
+          }
+        }
       }
-    } else {
-      rows = migrateOdNums(SEED.map(r => ({...r})));
-      nextId = 100; nextOdNum = 27;
-    }
-  } catch(e) {
+    } catch(e) {}
+  }
+
+  if (bestLocal && bestLocal.rows.length > 0) {
+    rows      = migrateOdNums(bestLocal.rows);
+    nextId    = bestLocal.nextId    || 100;
+    nextOdNum = bestLocal.nextOdNum || nextOdNum;
+  } else {
     rows = migrateOdNums(SEED.map(r => ({...r})));
     nextId = 100; nextOdNum = 27;
   }
@@ -913,30 +930,50 @@ async function load() {
 
   if (!gasAvailable()) { setSyncBadge('offline'); return; }
 
+  // ── Step 2: Sync with Google Sheets ─────────────────────────────────────
+  // SAFETY RULE: Remote data only wins if it has MORE rows than local.
+  // This prevents a partially-synced or empty sheet from wiping local entries.
   setSyncBadge('loading');
   try {
     const resp   = await fetch(GAS_URL, { cache: 'no-store' });
     const remote = await resp.json();
-    if (remote && remote.rows && remote.rows.length > 0) {
+
+    if (remote && remote.rows && remote.rows.length > rows.length) {
+      // Remote has MORE data — use it
       rows      = migrateOdNums(remote.rows);
       nextId    = remote.nextId    || nextId;
       nextOdNum = remote.nextOdNum || nextOdNum;
       localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId, nextOdNum }));
-      render(); updateKPIs(); setSyncBadge('ok');
+      render(); updateKPIs();
+      setSyncBadge('ok');
+      showToast('Synced ' + rows.length + ' entries from Google Sheets ✓');
+    } else if (remote && remote.rows && remote.rows.length === rows.length) {
+      // Same count — remote is up to date
+      setSyncBadge('ok');
     } else {
-      if (rows.length === 0) { rows = migrateOdNums(SEED.map(r=>({...r}))); nextId=100; nextOdNum=27; render(); updateKPIs(); }
+      // Local has MORE data — push local up to sheets
       setSyncBadge('saving');
       const payload = JSON.stringify({ rows, nextId, nextOdNum, savedAt: new Date().toISOString() });
       const pushResp = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:payload });
       const result   = await pushResp.json();
-      if (result.ok) { localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId, nextOdNum })); setSyncBadge('ok'); showToast('26 decisions pushed to Google Sheets ✓'); }
-      else { setSyncBadge('error', '⚠ ' + (result.error||'Push failed')); }
+      if (result.ok) {
+        localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId, nextOdNum }));
+        setSyncBadge('ok');
+        showToast('Pushed ' + rows.length + ' entries to Google Sheets ✓');
+      } else {
+        setSyncBadge('error', '⚠ ' + (result.error||'Push failed'));
+      }
     }
-  } catch(e) { setSyncBadge('error', '⚠ Could not reach Google Sheets'); }
+  } catch(e) { setSyncBadge('error', '⚠ Could not reach Google Sheets — working locally'); }
 }
 
 function save() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId, nextOdNum })); } catch(e) {}
+  const payload = JSON.stringify({ rows, nextId, nextOdNum });
+  try {
+    localStorage.setItem(STORE_KEY, payload);
+    // Always write a redundant backup key — extra safety net
+    localStorage.setItem('hra_od_backup', payload);
+  } catch(e) {}
   if (!gasAvailable()) { setSyncBadge('offline'); return; }
   clearTimeout(saveTimer);
   setSyncBadge('saving');
@@ -959,13 +996,25 @@ async function manualRefresh() {
   try {
     const resp   = await fetch(GAS_URL, { cache:'no-store' });
     const remote = await resp.json();
-    if (remote && remote.rows) {
-      rows      = migrateOdNums(remote.rows);
-      nextId    = remote.nextId    || nextId;
-      nextOdNum = remote.nextOdNum || nextOdNum;
-      localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId, nextOdNum }));
-      render(); updateKPIs(); showToast('Refreshed from Google Sheets ✓');
-      setSyncBadge('ok');
+    if (remote && remote.rows && remote.rows.length > 0) {
+      if (remote.rows.length >= rows.length) {
+        // Remote has same or more — safe to use
+        rows      = migrateOdNums(remote.rows);
+        nextId    = remote.nextId    || nextId;
+        nextOdNum = remote.nextOdNum || nextOdNum;
+        localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId, nextOdNum }));
+        render(); updateKPIs();
+        showToast('Refreshed — ' + rows.length + ' entries from Google Sheets ✓');
+        setSyncBadge('ok');
+      } else {
+        // Remote has FEWER rows — refuse to overwrite, push local up instead
+        showToast('⚠ Remote has fewer entries (' + remote.rows.length + ') than local (' + rows.length + ') — pushing local up');
+        setSyncBadge('saving');
+        await pushToSheets();
+      }
+    } else {
+      showToast('⚠ Remote returned no data — keeping local entries');
+      setSyncBadge('offline');
     }
   } catch(e) { setSyncBadge('error', '⚠ Could not reach Google Sheets'); }
 }
@@ -1409,6 +1458,47 @@ document.getElementById('sp-test-btn').onclick = () => {
   el.style.display=''; el.style.background='#f0f9ff'; el.style.borderColor='#bae6fd'; el.style.color='#0369a1';
   el.innerHTML = '🔗 Test link (click to verify):<br><a href="'+url+'" target="_blank" rel="noopener" style="word-break:break-all;color:var(--hra);">'+url+'</a>';
 };
+
+// ─── EXPORT / IMPORT BACKUP ───────────────────────────────────────────────
+function exportBackup() {
+  const data = { rows, nextId, nextOdNum, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'HRA_OD_Backup_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  showToast('Backup downloaded — ' + rows.length + ' entries saved ✓');
+}
+
+function importBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.rows || !Array.isArray(data.rows)) {
+        showToast('⚠ Invalid backup file — no rows found'); return;
+      }
+      if (data.rows.length < rows.length) {
+        if (!confirm(`The backup has ${data.rows.length} entries but you currently have ${rows.length}.\n\nRestore anyway? This will replace your current data.`)) return;
+      }
+      rows      = migrateOdNums(data.rows);
+      nextId    = data.nextId    || 100;
+      nextOdNum = data.nextOdNum || nextOdNum;
+      localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId, nextOdNum }));
+      render(); updateKPIs();
+      showToast('✓ Restored ' + rows.length + ' entries from backup');
+      // Also push to Google Sheets if connected
+      if (gasAvailable()) { setSyncBadge('saving'); pushToSheets(); }
+    } catch(err) {
+      showToast('⚠ Could not read backup file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  // Reset input so same file can be re-imported if needed
+  event.target.value = '';
+}
 
 // ─── INIT ─────────────────────────────────────────────────────────────────
 load();
