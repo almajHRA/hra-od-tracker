@@ -342,12 +342,21 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
   <div style="display:flex;align-items:center;gap:8px;margin-left:14px;flex-shrink:0;">
     <span id="sync-badge" style="font-size:11px;color:#94a3b8;white-space:nowrap;">● Local only</span>
     <button onclick="manualRefresh()" title="Pull latest from Google Sheets" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:#fff;padding:5px 8px;cursor:pointer;font-size:13px;line-height:1;">↻</button>
+    <button onclick="downloadBackup()" title="Download a backup of all decisions" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:#fff;padding:5px 8px;cursor:pointer;font-size:13px;line-height:1;">⤓ Backup</button>
   </div>
   <button id="openSettings" title="Settings" style="margin-left:6px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:#fff;padding:6px 9px;cursor:pointer;font-size:15px;line-height:1;flex-shrink:0;">⚙</button>
 </header>
 
 <!-- ─── PAGE ─────────────────────────────────────── -->
 <div class="page">
+
+  <!-- WEEKLY BACKUP REMINDER -->
+  <div id="backup-banner" style="display:none;align-items:center;gap:12px;flex-wrap:wrap;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:11px 14px;margin-bottom:14px;font-size:13px;color:#92400e;">
+    <span style="font-size:16px;">🗄</span>
+    <span id="backup-banner-msg" style="flex:1;min-width:200px;"></span>
+    <button onclick="downloadBackup()" style="background:#b45309;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer;font-size:12px;">Download backup now</button>
+    <button onclick="snoozeBackup()" style="background:transparent;color:#92400e;border:1px solid #fcd34d;border-radius:6px;padding:7px 12px;cursor:pointer;font-size:12px;">Remind me tomorrow</button>
+  </div>
 
   <!-- KPI STRIP -->
   <div class="kpis">
@@ -633,6 +642,18 @@ select.dd.person-dd:focus { outline-color:var(--hra); }
         <div style="font-size:11px;color:var(--text3);margin-top:4px;line-height:1.6;">
           Required for team sync. See setup instructions below. Once set, all changes sync instantly for everyone with the app link.
         </div>
+      </div>
+
+      <div style="height:1px;background:var(--border);margin:4px 0 18px;"></div>
+
+      <div class="form-grp full" style="margin-bottom:14px;">
+        <label>Backups</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;">
+          <button type="button" class="btn-secondary" onclick="downloadBackup()">⤓ Download backup now</button>
+          <button type="button" class="btn-secondary" onclick="document.getElementById('restore-input').click()">⤒ Restore from backup file…</button>
+          <input type="file" id="restore-input" accept=".json,application/json" style="display:none;" onchange="restoreBackup(this)">
+        </div>
+        <div id="backup-last" style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.6;"></div>
       </div>
 
       <div style="height:1px;background:var(--border);margin:4px 0 18px;"></div>
@@ -3050,7 +3071,13 @@ async function load() {
     const resp = await fetch(GAS_URL, { cache: 'no-store' });
     const remote = await resp.json();
 
-    if (remote && remote.rows && remote.rows.length > 0) {
+    // Sheet script reported a problem — never overwrite the sheet in that case
+    if (!remote || remote.error || !Array.isArray(remote.rows)) {
+      setSyncBadge('error', '⚠ Sheet error: ' + ((remote && remote.error) || 'unexpected response'));
+      return;
+    }
+
+    if (remote.rows.length > 0) {
       // Remote has real data — use it
       rows   = remote.rows;
       nextId = remote.nextId || nextId;
@@ -3067,7 +3094,7 @@ async function load() {
       if (result.ok) {
         localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
         setSyncBadge('ok');
-        showToast('26 decisions pushed to Google Sheets ✓');
+        showToast(rows.length + ' decisions pushed to Google Sheets ✓');
       } else {
         setSyncBadge('error', '⚠ ' + (result.error || 'Push failed'));
       }
@@ -3104,7 +3131,8 @@ async function manualRefresh() {
   try {
     const resp = await fetch(GAS_URL, { cache: 'no-store' });
     const remote = await resp.json();
-    if (remote && remote.rows) {
+    if (remote && remote.error) { setSyncBadge('error', '⚠ Sheet error: ' + remote.error); return; }
+    if (remote && Array.isArray(remote.rows) && remote.rows.length > 0) {
       rows = remote.rows; nextId = remote.nextId || nextId;
       localStorage.setItem(STORE_KEY, JSON.stringify({ rows, nextId }));
       render(); updateKPIs(); showToast('Refreshed from Google Sheets ✓');
@@ -3599,6 +3627,7 @@ function openSettings() {
   document.getElementById('sp-path-input').value    = SP_PATH;
   document.getElementById('sp-folder-input').value  = SP_FOLDER;
   document.getElementById('sp-test-result').style.display = 'none';
+  checkBackupReminder();
   document.getElementById('sp-overlay').classList.add('open');
 }
 function closeSettingsModal() {
@@ -3643,7 +3672,89 @@ document.getElementById('sp-test-btn').onclick = () => {
   el.innerHTML = '🔗 Test link (click to verify):<br><a href="' + url + '" target="_blank" rel="noopener" style="word-break:break-all;color:var(--hra);">' + url + '</a>';
 };
 
+// ─── BACKUPS ──────────────────────────────────────────────────────────────
+const BACKUP_KEY   = 'hra_od_last_backup';   // when this browser last downloaded a backup
+const SNOOZE_KEY   = 'hra_od_backup_snooze'; // "remind me tomorrow" until this time
+const BACKUP_DAYS  = 7;
+const DAY_MS       = 24 * 60 * 60 * 1000;
+
+function backupFileName() {
+  return 'hra_od_backup_' + new Date().toISOString().slice(0,10) + '.json';
+}
+
+function downloadBackup(silent) {
+  if (!rows || rows.length === 0) { showToast('Nothing to back up yet'); return; }
+  const data = JSON.stringify({ rows, nextId, backedUpAt: new Date().toISOString() }, null, 2);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+  a.download = backupFileName();
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  try {
+    localStorage.setItem(BACKUP_KEY, new Date().toISOString());
+    localStorage.removeItem(SNOOZE_KEY);
+  } catch(e) {}
+  checkBackupReminder();
+  if (!silent) showToast('Backup downloaded — ' + rows.length + ' decisions ✓');
+}
+
+function snoozeBackup() {
+  try { localStorage.setItem(SNOOZE_KEY, String(Date.now() + DAY_MS)); } catch(e) {}
+  checkBackupReminder();
+}
+
+function checkBackupReminder() {
+  let last = null, snooze = 0;
+  try {
+    last   = localStorage.getItem(BACKUP_KEY);
+    snooze = Number(localStorage.getItem(SNOOZE_KEY) || 0);
+  } catch(e) {}
+  const days = last ? Math.floor((Date.now() - new Date(last).getTime()) / DAY_MS) : null;
+
+  const lastEl = document.getElementById('backup-last');
+  if (lastEl) lastEl.textContent = last
+    ? 'Last backup from this browser: ' + new Date(last).toLocaleDateString() + ' (' + days + ' day' + (days === 1 ? '' : 's') + ' ago). You will be reminded every ' + BACKUP_DAYS + ' days.'
+    : 'No backup downloaded from this browser yet.';
+
+  const banner = document.getElementById('backup-banner');
+  const due = days === null || days >= BACKUP_DAYS;
+  if (due && Date.now() > snooze) {
+    document.getElementById('backup-banner-msg').innerHTML = days === null
+      ? '<strong>Weekly backup:</strong> you haven\'t downloaded a backup from this browser yet. Save one to your OneDrive project folder.'
+      : '<strong>Weekly backup due:</strong> your last backup was ' + days + ' days ago. Save a fresh copy to your OneDrive project folder.';
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function restoreBackup(input) {
+  const file = input.files && input.files[0];
+  input.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try { data = JSON.parse(reader.result); } catch(e) { alert('That file is not a valid backup (could not read JSON).'); return; }
+    if (!data || !Array.isArray(data.rows) || data.rows.length === 0) { alert('That file does not contain any decisions.'); return; }
+    const ok = confirm(
+      'Restore ' + data.rows.length + ' decisions from "' + file.name + '"?\n\n' +
+      'This replaces the ' + rows.length + ' decisions currently in the tracker for everyone on the team.\n' +
+      'A backup of the current data will be downloaded first, just in case.');
+    if (!ok) return;
+    downloadBackup(true); // safety copy of what's there now
+    rows   = data.rows;
+    nextId = Math.max(data.nextId || 0, ...rows.map(r => Number(r.id) || 0)) + 1;
+    save(); render(); updateKPIs();
+    closeSettingsModal();
+    showToast('Restored ' + rows.length + ' decisions ✓');
+  };
+  reader.readAsText(file);
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────
+checkBackupReminder();
+setInterval(checkBackupReminder, 60 * 60 * 1000); // re-check hourly if the tab stays open
 load(); // async — renders from localStorage instantly, then syncs from Google Sheets
 </script>
 </body>
